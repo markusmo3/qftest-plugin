@@ -1,0 +1,18 @@
+<div>
+ <h4> Build Step </h4>
+ <p> In this build step you can select which test-suites your job should run.</p>
+ <p> Note that the path for a test-suite or parent folder has to be relative to the workspace, which <b>has to be</b> specified above under "Advanced Project Options - Use custom workspace".</p>
+ <p> Examples: <br />
+     -"Suites/MySuite/some_suite.qft" only runs one test-suite <br />
+     -"Suites/MySuite" runs all test-suites in the MySuite folder <br />
+     -"*" runs all test-suites in your workspace
+
+ </p>
+ <p> Any of <a href="http://www.qfs.de/qftest/manual/en/tech_execution.html#sec_execution">these command line arguments</a> under the label "Test execution" can be used for the execution of your test-suites. </p>
+ <h4> Post-Build Actions </h4>
+ <p> For the post-build actions to work, make sure to provide the correct paths to the logs and reports:<br />
+     Archive the artifacts: <tt>qftestJenkinsReports/$JOB_NAME/$BUILD_NUMBER/logs/*.q*</tt><br />
+	 Publish HTML reports: <tt>qftestJenkinsReports/$JOB_NAME/$BUILD_NUMBER/html/</tt> and change index.html to report.html<br />
+	 Publish JUnit test result report: <tt>qftestJenkinsReports/$JOB_NAME/$BUILD_NUMBER/junit/report_junit.xml</tt><br /></p>
+ <p> For further information please see the <a href="http://www.qfs.de/qftest/manual/en/manual.html">QF-Test manual</a>. </p>
+</div>

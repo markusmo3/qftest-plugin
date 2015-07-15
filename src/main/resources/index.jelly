@@ -1,0 +1,7 @@
+<?jelly escape-by-default='true'?>
+<!--
+  This view is used to render the installed plugins page.
+-->
+<div>
+    <a href="http://www.qfs.de/en/index.html">QF-Test</a> is a cross-platform software tool for the GUI test automation specialized on Java and Web applications.
+</div>

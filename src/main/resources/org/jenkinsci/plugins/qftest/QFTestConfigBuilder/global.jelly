@@ -1,0 +1,11 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <f:section title="QF-Test">
+    <f:entry title="Path to QF-Test version (Windows)" field="qftPath">
+      <f:textbox name="qftest.qfPath"  value="${descriptor.getQfPath()}" />
+    </f:entry>
+    <f:entry title="Path to QF-Test version (Unix)" field="qftPathUnix">
+      <f:textbox name="qftest.qfPathUnix"  value="${descriptor.getQfPathUnix()}" />
+    </f:entry>
+  </f:section>
+</j:jelly>
