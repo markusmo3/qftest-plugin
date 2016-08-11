@@ -23,6 +23,7 @@
  */
 package org.jenkinsci.plugins.qftest;
 
+import hudson.EnvVars;
 import hudson.Extension;
 import hudson.Launcher;
 import hudson.model.BuildListener;
@@ -31,6 +32,7 @@ import hudson.model.AbstractProject;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.Builder;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import net.sf.json.JSONObject;
@@ -225,12 +227,21 @@ public class QFTestConfigBuilder extends Builder {
 									+ " illegal characters: * ? < > | :");
 			return false;
 		}
+		// get envvars
+		EnvVars envVars = new EnvVars();
+		try {
+			envVars = build.getEnvironment(launcher.getListener());
+		} catch (IOException e) {
+			listener.getLogger().println("[qftest plugin] ERROR: Can't read EnvVars" + e);
+		} catch (InterruptedException e) {
+			listener.getLogger().println("[qftest plugin] ERROR: Can't read EnvVars" + e);
+		}
 		// Create a new script with the correct config
 		ScriptCreator script = new ScriptCreator(suitefield, getDescriptor()
 				.getQfPath(), getDescriptor().getQfPathUnix(),
 				specificQFTestVersion, customReportTempDirectory,
 				daemonSelected, customPath, customReports, daemonhost,
-				daemonport, launcher.isUnix());
+				daemonport, launcher.isUnix(), envVars);
 		try {
 			return script.getScript().perform(build, launcher, listener);
 		} catch (InterruptedException e) {
