@@ -23,6 +23,7 @@
  */
 package org.jenkinsci.plugins.qftest;
 
+import hudson.EnvVars;
 import hudson.tasks.CommandInterpreter;
 import hudson.tasks.BatchFile;
 import hudson.tasks.Shell;
@@ -50,40 +51,41 @@ public class ScriptCreator {
 	private final String customReports;
 	private final String daemonhost;
 	private final String daemonport;
+	private final EnvVars envVars;
 
 	/**
 	 * CTOR
-	 * 
-	 * @param suitefield
+	 *  @param suitefield
 	 *            Contains name of testsuites and their command line arguments
 	 * @param qfPath
 	 *            global path for Windows jobs
 	 * @param qfPathUnix
-	 *            global path for Unix jobs
+ *            global path for Unix jobs
 	 * @param customPathSelected
-	 *            if specific QF-Test version should be used
+*            if specific QF-Test version should be used
 	 * @param customReportsSelected
-	 *            if custom report directory should be used
+*            if custom report directory should be used
 	 * @param daemonSelected
-	 *            If daemon should be called
+*            If daemon should be called
 	 * @param customPath
-	 *            Path to specific QF-Test directory for a job
+*            Path to specific QF-Test directory for a job
 	 * @param customReports
-	 *            Reports will now be saved in WORKSPACE/customReports instead
-	 *            of WORKSPACE/qftestJenkinsReports
+*            Reports will now be saved in WORKSPACE/customReports instead
+*            of WORKSPACE/qftestJenkinsReports
 	 * @param daemonhost
-	 *            Daemonhost
+*            Daemonhost
 	 * @param daemonport
-	 *            Daemonport
+*            Daemonport
 	 * @param isUnix
-	 *            Is this machine running Unix
+	 * @param envVars
 	 */
 	public ScriptCreator(ArrayList<Suites> suitefield, String qfPath,
-			String qfPathUnix, boolean customPathSelected,
-			boolean customReportsSelected, boolean daemonSelected,
-			String customPath, String customReports, String daemonhost,
-			String daemonport, boolean isUnix) {
+						 String qfPathUnix, boolean customPathSelected,
+						 boolean customReportsSelected, boolean daemonSelected,
+						 String customPath, String customReports, String daemonhost,
+						 String daemonport, boolean isUnix, EnvVars envVars) {
 		this.suitefield = suitefield;
+		this.envVars = envVars;
 		if (qfPath == null)
 			this.qfPath = "";
 		else
@@ -261,7 +263,7 @@ public class ScriptCreator {
 			}
 			script.append("qftestc -batch -run -exitcodeignoreexception "
 					+ "-runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\" ");
-			script.append(s.getCustomParam());
+			script.append(envVars.expand(s.getCustomParam()));
 			script.append(" -runlog %logdir%\\logs\\log_+b %suite");
 			script.append(i);
 			script.append("%\n");
@@ -294,7 +296,7 @@ public class ScriptCreator {
 			script.append(daemonport);
 			script.append(" -exitcodeignoreexception"
 					+ " -runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\" ");
-			script.append(s.getCustomParam());
+			script.append(envVars.expand(s.getCustomParam()));
 			script.append(" -runlog %logdir%\\logs\\log_+b %suite");
 			script.append(i);
 			script.append("%\n");
@@ -422,7 +424,7 @@ public class ScriptCreator {
 		for (Suites s : suitefield) {
 			script.append("qftest -batch -exitcodeignoreexception "
 					+ "-runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\" ");
-			script.append(s.getCustomParam());
+			script.append(envVars.expand(s.getCustomParam()));
 			script.append(" -runlog \"$LOGDIR/logs/log_+b\" $CURDIR/$SUITE");
 			script.append(i++);
 			script.append("\n");
@@ -445,7 +447,7 @@ public class ScriptCreator {
 			script.append(daemonport);
 			script.append(" -exitcodeignoreexception "
 					+ "-runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\" ");
-			script.append(s.getCustomParam());
+			script.append(envVars.expand(s.getCustomParam()));
 			script.append(" -runlog \"$LOGDIR/logs/log_+b\" $CURDIR/$SUITE");
 			script.append(i++);
 			script.append("\n");
