@@ -34,7 +34,7 @@ import java.util.ArrayList;
  *
  * This class creates a Batch/Shell script with all the information given by
  * the user
- * 
+ *
  * @author QFS, Sebastian Kleber
  */
 public class ScriptCreator {
@@ -109,7 +109,7 @@ public class ScriptCreator {
 
 	/**
 	 * Returns the commandInterpreter
-	 * 
+	 *
 	 * @return complete script which will be executed
 	 */
 	public CommandInterpreter getScript() {
@@ -261,7 +261,7 @@ public class ScriptCreator {
 				script.append(slash);
 				script.append(" ...\n");
 			}
-			script.append("qftestc -batch -run -exitcodeignoreexception "
+			script.append("qftestc -batch -run -exitcodeignoreexception -nomessagewindow "
 					+ "-runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\" ");
 			script.append(envVars.expand(s.getCustomParam()));
 			script.append(" -runlog %logdir%\\logs\\log_+b %suite");
@@ -294,7 +294,7 @@ public class ScriptCreator {
 			script.append(daemonhost);
 			script.append(" -daemonport ");
 			script.append(daemonport);
-			script.append(" -exitcodeignoreexception"
+			script.append(" -exitcodeignoreexception -nomessagewindow"
 					+ " -runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\" ");
 			script.append(envVars.expand(s.getCustomParam()));
 			script.append(" -runlog %logdir%\\logs\\log_+b %suite");
@@ -422,7 +422,7 @@ public class ScriptCreator {
 		if (customPathSelected || !qfPathUnix.isEmpty())
 			script.append("./");
 		for (Suites s : suitefield) {
-			script.append("qftest -batch -exitcodeignoreexception "
+			script.append("qftest -batch -exitcodeignoreexception -nomessagewindow "
 					+ "-runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\" ");
 			script.append(envVars.expand(s.getCustomParam()));
 			script.append(" -runlog \"$LOGDIR/logs/log_+b\" $CURDIR/$SUITE");
@@ -433,7 +433,7 @@ public class ScriptCreator {
 
 	/**
 	 * Creates the batch call script for daemon test
-	 * 
+	 *
 	 * @see runner
 	 */
 	private void daemonRunnerShell() {
@@ -445,7 +445,7 @@ public class ScriptCreator {
 			script.append(daemonhost);
 			script.append(" -daemonport ");
 			script.append(daemonport);
-			script.append(" -exitcodeignoreexception "
+			script.append(" -exitcodeignoreexception -nomessagewindow "
 					+ "-runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\" ");
 			script.append(envVars.expand(s.getCustomParam()));
 			script.append(" -runlog \"$LOGDIR/logs/log_+b\" $CURDIR/$SUITE");
