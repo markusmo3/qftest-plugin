@@ -6,13 +6,13 @@
     <artifactId>plugin</artifactId>
     <version>1.609</version>
   </parent>
-  
+
   <artifactId>qftest</artifactId>
-  <version>1.0.1</version>
+  <version>1.0.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>QF-Test Plugin</name>
   <url>https://wiki.jenkins-ci.org/display/JENKINS/QF-Test+Plugin</url>
-  
+
   <licenses>
     <license>
       <name>MIT License</name>
@@ -28,14 +28,14 @@
     </developer>
   </developers>
 
-	 
+
   <scm>
     <connection>scm:git:ssh://github.com/jenkinsci/qftest-plugin.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/jenkinsci/qftest-plugin.git</developerConnection>
     <url>https://github.com/jenkinsci/qftest-plugin</url>
     <tag>HEAD</tag>
   </scm>
-   
+
   <repositories>
     <repository>
       <id>repo.jenkins-ci.org</id>
@@ -61,6 +61,6 @@
       <version>1.5</version>
     </dependency>
   </dependencies>
-  
+
 
 </project>
