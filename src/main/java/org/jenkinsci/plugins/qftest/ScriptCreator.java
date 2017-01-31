@@ -424,8 +424,24 @@ public class ScriptCreator {
 		for (Suites s : suitefield) {
 			script.append("qftest -batch -exitcodeignoreexception -nomessagewindow "
 					+ "-runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\" ");
-			script.append(envVars.expand(s.getCustomParam()));
-			script.append(" -runlog \"$LOGDIR/logs/log_+b\" $CURDIR/$SUITE");
+			String[] customParams = s.getCustomParam().split(" ");
+			boolean customRunLog = false;
+			for (int j = 0; j < customParams.length; j++) {
+				String param = customParams[j];
+				if (param.equalsIgnoreCase("-runlog")) {
+					String runlogName = envVars.expand(customParams[j+1]);
+					script.append("-runlog \"$LOGDIR/logs/"+runlogName+"\" ");
+					customRunLog = true;
+					j++;
+				} else {
+					script.append(envVars.expand(customParams[j])+" ");
+				}
+			}
+			if (!customRunLog) {
+				script.append("-runlog \"$LOGDIR/logs/log_+b\" ");
+			}
+			
+			script.append("$CURDIR/$SUITE");
 			script.append(i++);
 			script.append("\n");
 		}
