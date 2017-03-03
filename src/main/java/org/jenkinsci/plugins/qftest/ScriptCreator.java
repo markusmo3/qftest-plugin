@@ -433,7 +433,17 @@ public class ScriptCreator {
 					script.append("-runlog \"$LOGDIR/logs/"+runlogName+"\" ");
 					customRunLog = true;
 					j++;
-				} else {
+				} else if (param.startsWith("-report")) {
+					if (param.equalsIgnoreCase("-report") 
+					||	param.equalsIgnoreCase("-report.html")
+					||  param.equalsIgnoreCase("-report.junit")
+					||  param.equalsIgnoreCase("-report.xml")
+					||  param.equalsIgnoreCase("-report.name")
+					) {
+						j++;
+					}
+					
+				}else {
 					script.append(envVars.expand(customParams[j])+" ");
 				}
 			}
@@ -477,8 +487,36 @@ public class ScriptCreator {
 		if (customPathSelected) {
 			script.append("./");
 		}
-		script.append("qftest -batch -genreport -report.html \"$LOGDIR/html\" "
-				+ "-report.junit \"$LOGDIR/junit\" \"$LOGDIR/logs\"\n");
+		script.append("qftest -batch -genreport ");
+		
+		for (Suites s : suitefield) {
+			String[] customParams = s.getCustomParam().split(" ");
+			boolean customreportHTML = false;
+			boolean customreportJUnit = false;
+			for (int j = 0; j < customParams.length; j++) {
+				String param = customParams[j];
+				if (param.equalsIgnoreCase("-report.html")) {
+					String reportConf = envVars.expand(customParams[j+1]);
+					script.append( param+" "+reportConf+" ");
+					customreportHTML = true;
+					j++;
+				} else if (param.equalsIgnoreCase("-report.junit")) {
+					String reportConf = envVars.expand(customParams[j+1]);
+					script.append( param+" "+reportConf+" ");
+					customreportJUnit = true;
+					j++;
+				} else {
+					script.append(envVars.expand(customParams[j])+" ");
+				}
+			}
+			if (!customreportHTML) {
+				script.append("-report.html \"$LOGDIR/html\" ");
+			}
+			if (!customreportJUnit) {
+				script.append("-report.junit \"$LOGDIR/junit\" ");
+			}
+			script.append("\"$LOGDIR/logs\"\n");
+		}
 	}
 
 	/**
