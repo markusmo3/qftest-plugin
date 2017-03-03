@@ -402,9 +402,10 @@ public class ScriptCreator {
 	 */
 	private void runnerShell() {
 		int i = 0;
-		if (customPathSelected || !qfPathUnix.isEmpty())
-			script.append("./");
 		for (Suites s : suitefield) {
+			if (customPathSelected || !qfPathUnix.isEmpty()) {
+				script.append("./");
+			}
 			script.append("qftest -batch -exitcodeignoreexception -nomessagewindow ");
 			addDaemonParamsIfNeeded();
 
