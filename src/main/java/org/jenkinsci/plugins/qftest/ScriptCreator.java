@@ -126,10 +126,7 @@ public class ScriptCreator {
 		suitedir();
 		deleteLogs();
 		qftPath();
-		if (!daemonSelected)
-			runner();
-		else
-			daemonRunner();
+		runner();
 		genreport();
 		setMark();
 		popd();
@@ -251,51 +248,31 @@ public class ScriptCreator {
 				script.append(s.getSuitename());
 				script.append(" ...\n");
 			} else {
-				if (s.getSuitename().contains("/")) {
-					slash = "/";
+				if (daemonSelected) {
+					script.append("echo [qftest plugin] WARNING: You want to run "
+							+ "all test-suites in folder \\");
+					script.append(s.getSuitename());
+					script.append("\\ in daemon mode.\n");
+					script.append("echo [qftest plugin] WARNING: Daemon mode does "
+							+ "not support the execution of multiple test-suites at "
+							+ "once, so only one test-suite will be run.\n");
+				} else {
+					if (s.getSuitename().contains("/")) {
+						slash = "/";
+					}
+					script.append("echo [qftest plugin] Running all test-suites in"
+							+ " directory %WORKSPACE%");
+					script.append(slash);
+					script.append(s.getSuitename());
+					script.append(slash);
+					script.append(" ...\n");
 				}
-				script.append("echo [qftest plugin] Running all test-suites in"
-						+ " directory %WORKSPACE%");
-				script.append(slash);
-				script.append(s.getSuitename());
-				script.append(slash);
-				script.append(" ...\n");
 			}
+			
+			
 			script.append("qftestc -batch -run -exitcodeignoreexception -nomessagewindow "
 					+ "-runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\" ");
-			script.append(envVars.expand(s.getCustomParam()));
-			script.append(" -runlog %logdir%\\logs\\log_+b %suite");
-			script.append(i);
-			script.append("%\n");
-			i++;
-		}
-		script.append("if %errorlevel% LSS 0 ( set qfError=%errorlevel% )\n");
-	}
-
-	/**
-	 * Calls QF-Test in daemon mode and runs all the suites with their CLAs
-	 */
-	private void daemonRunner() {
-		int i = 0;
-		for (Suites s : suitefield) {
-			if (!s.getSuitename().contains(".qft")) {
-				script.append("echo [qftest plugin] WARNING: You want to run "
-						+ "all test-suites in folder \\");
-				script.append(s.getSuitename());
-				script.append("\\ in daemon mode.\n");
-				script.append("echo [qftest plugin] WARNING: Daemon mode does "
-						+ "not support the execution of multiple test-suites at "
-						+ "once, so only one test-suite will be run.\n");
-			}
-			script.append("echo [qftest plugin] Running test-suite ");
-			script.append(s.getSuitename());
-			script.append(" ...\n");
-			script.append("qftestc -batch -calldaemon -daemonhost ");
-			script.append(daemonhost);
-			script.append(" -daemonport ");
-			script.append(daemonport);
-			script.append(" -exitcodeignoreexception -nomessagewindow"
-					+ " -runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\" ");
+			addDaemonParamsIfNeeded();
 			script.append(envVars.expand(s.getCustomParam()));
 			script.append(" -runlog %logdir%\\logs\\log_+b %suite");
 			script.append(i);
@@ -342,10 +319,7 @@ public class ScriptCreator {
 		suitedirShell();
 		deleteLogsShell();
 		qftPathShell();
-		if (!daemonSelected)
-			runnerShell();
-		else
-			daemonRunnerShell();
+		runnerShell();
 		genreportShell();
 		setMarkShell();
 		System.out.println(script.toString());
@@ -432,6 +406,8 @@ public class ScriptCreator {
 			script.append("./");
 		for (Suites s : suitefield) {
 			script.append("qftest -batch -exitcodeignoreexception -nomessagewindow ");
+			addDaemonParamsIfNeeded();
+
 			String[] customParams = s.getCustomParam().split(" ");
 			boolean customRunLogSet = false;
 			boolean customRunIdSet = false;
@@ -465,26 +441,12 @@ public class ScriptCreator {
 		}
 	}
 
-	/**
-	 * Creates the batch call script for daemon test
-	 *
-	 * @see runner
-	 */
-	private void daemonRunnerShell() {
-		int i = 0;
-		if (customPathSelected || !qfPathUnix.isEmpty())
-			script.append("./");
-		for (Suites s : suitefield) {
-			script.append("qftest -batch -calldaemon -daemonhost ");
+	private void addDaemonParamsIfNeeded() {
+		if (daemonSelected) {
+			script.append("-calldaemon -daemonhost ");
 			script.append(daemonhost);
 			script.append(" -daemonport ");
 			script.append(daemonport);
-			script.append(" -exitcodeignoreexception -nomessagewindow "
-					+ "-runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\" ");
-			script.append(envVars.expand(s.getCustomParam()));
-			script.append(" -runlog \"$LOGDIR/logs/log_+b\" $CURDIR/$SUITE");
-			script.append(i++);
-			script.append("\n");
 		}
 	}
 
@@ -504,13 +466,11 @@ public class ScriptCreator {
 			for (int j = 0; j < customParams.length; j++) {
 				String param = customParams[j];
 				if (param.equalsIgnoreCase("-report.html")) {
-					String reportConf = envVars.expand(customParams[j+1]);
-					script.append( param+" "+reportConf+" ");
+					script.append( param+" "+envVars.expand(customParams[j+1])+" ");
 					customreportHTML = true;
 					j++;
 				} else if (param.equalsIgnoreCase("-report.junit")) {
-					String reportConf = envVars.expand(customParams[j+1]);
-					script.append( param+" "+reportConf+" ");
+					script.append( param+" "+envVars.expand(customParams[j+1])+" ");
 					customreportJUnit = true;
 					j++;
 				} else {
@@ -523,6 +483,7 @@ public class ScriptCreator {
 			if (!customreportJUnit) {
 				script.append("-report.junit \"$LOGDIR/junit\" ");
 			}
+			
 			script.append("\"$LOGDIR/logs\"\n");
 		}
 	}
