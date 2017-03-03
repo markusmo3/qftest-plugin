@@ -458,11 +458,10 @@ public class ScriptCreator {
 			script.append("./");
 		}
 		script.append("qftest -batch -genreport ");
-		
+		boolean customreportHTML = false;
+		boolean customreportJUnit = false;
 		for (Suites s : suitefield) {
 			String[] customParams = s.getCustomParam().split(" ");
-			boolean customreportHTML = false;
-			boolean customreportJUnit = false;
 			for (int j = 0; j < customParams.length; j++) {
 				String param = customParams[j];
 				if (param.equalsIgnoreCase("-report.html")) {
@@ -476,16 +475,16 @@ public class ScriptCreator {
 				} else {
 					script.append(envVars.expand(customParams[j])+" ");
 				}
-			}
-			if (!customreportHTML) {
-				script.append("-report.html \"$LOGDIR/html\" ");
-			}
-			if (!customreportJUnit) {
-				script.append("-report.junit \"$LOGDIR/junit\" ");
-			}
-			
-			script.append("\"$LOGDIR/logs\"\n");
+			}	
 		}
+		
+		if (!customreportHTML) {
+			script.append("-report.html \"$LOGDIR/html\" ");
+		}
+		if (!customreportJUnit) {
+			script.append("-report.junit \"$LOGDIR/junit\" ");
+		}
+		script.append("\"$LOGDIR/logs\"\n");
 	}
 
 	/**
