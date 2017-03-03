@@ -413,6 +413,15 @@ public class ScriptCreator {
 			script.append("[ ! -f \"$PWD/qftest\" ] && exit -10\n");
 		}
 	}
+	
+	private boolean reportParamHasValue(String param)
+	{
+		return param.equalsIgnoreCase("-report") 
+		||	param.equalsIgnoreCase("-report.html")
+		||  param.equalsIgnoreCase("-report.junit")
+		||  param.equalsIgnoreCase("-report.xml")
+		||  param.equalsIgnoreCase("-report.name");
+	}
 
 	/**
 	 * @see runner()
@@ -422,35 +431,34 @@ public class ScriptCreator {
 		if (customPathSelected || !qfPathUnix.isEmpty())
 			script.append("./");
 		for (Suites s : suitefield) {
-			script.append("qftest -batch -exitcodeignoreexception -nomessagewindow "
-					+ "-runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\" ");
+			script.append("qftest -batch -exitcodeignoreexception -nomessagewindow ");
 			String[] customParams = s.getCustomParam().split(" ");
-			boolean customRunLog = false;
+			boolean customRunLogSet = false;
+			boolean customRunIdSet = false;
 			for (int j = 0; j < customParams.length; j++) {
 				String param = customParams[j];
 				if (param.equalsIgnoreCase("-runlog")) {
-					String runlogName = envVars.expand(customParams[j+1]);
-					script.append("-runlog \"$LOGDIR/logs/"+runlogName+"\" ");
-					customRunLog = true;
+					script.append("-runlog \"$LOGDIR/logs/"+envVars.expand(customParams[j+1])+"\" ");
+					customRunLogSet = true;
+					j++;
+				} else if (param.equalsIgnoreCase("-runid")) {
+					script.append("-runid \""+ envVars.expand(customParams[j+1])+"\" ");
+					customRunIdSet = true;
 					j++;
 				} else if (param.startsWith("-report")) {
-					if (param.equalsIgnoreCase("-report") 
-					||	param.equalsIgnoreCase("-report.html")
-					||  param.equalsIgnoreCase("-report.junit")
-					||  param.equalsIgnoreCase("-report.xml")
-					||  param.equalsIgnoreCase("-report.name")
-					) {
+					if (reportParamHasValue(param)) {
 						j++;
 					}
-					
-				}else {
+				} else {
 					script.append(envVars.expand(customParams[j])+" ");
 				}
 			}
-			if (!customRunLog) {
+			if (!customRunLogSet) {
 				script.append("-runlog \"$LOGDIR/logs/log_+b\" ");
 			}
-			
+			if (!customRunIdSet) {
+				script.append("-runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\" ");
+			}
 			script.append("$CURDIR/$SUITE");
 			script.append(i++);
 			script.append("\n");
