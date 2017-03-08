@@ -141,9 +141,9 @@ public class ScriptCreator {
 		if (customReportsSelected)
 			reports = customReports;
 		script.append("echo [qftest plugin] Setting directories...\n");
-		script.append("set logdir=\"%CD%\\");
+		script.append("set logdir=%CD%\\");
 		script.append(reports);
-		script.append("\\%JOB_NAME%\\%BUILD_NUMBER%\"\n");
+		script.append("\\%JOB_NAME%\\%BUILD_NUMBER%\n");
 		script.append("set deletedir=\"");
 		script.append(reports);
 		script.append("\\%JOB_NAME%\\\"\n");
@@ -243,7 +243,8 @@ public class ScriptCreator {
 		int i = 0;
 		String slash = "\\";
 		for (Suites s : suitefield) {
-			if (s.getSuitename().contains(".qft")) {
+			String suiteName = s.getSuitename();
+			if (suiteName.contains(".qft")) {
 				script.append("echo [qftest plugin] Running test-suite ");
 				script.append(s.getSuitename());
 				script.append(" ...\n");
@@ -251,33 +252,57 @@ public class ScriptCreator {
 				if (daemonSelected) {
 					script.append("echo [qftest plugin] WARNING: You want to run "
 							+ "all test-suites in folder \\");
-					script.append(s.getSuitename());
+					script.append(suiteName);
 					script.append("\\ in daemon mode.\n");
 					script.append("echo [qftest plugin] WARNING: Daemon mode does "
 							+ "not support the execution of multiple test-suites at "
 							+ "once, so only one test-suite will be run.\n");
 				} else {
-					if (s.getSuitename().contains("/")) {
+					if (suiteName.contains("/")) {
 						slash = "/";
 					}
 					script.append("echo [qftest plugin] Running all test-suites in"
 							+ " directory %WORKSPACE%");
 					script.append(slash);
-					script.append(s.getSuitename());
+					script.append(suiteName);
 					script.append(slash);
 					script.append(" ...\n");
 				}
 			}
-			
-			
-			script.append("qftestc -batch -run -exitcodeignoreexception -nomessagewindow "
-					+ "-runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\" ");
+			script.append("@echo on\n");
+			script.append("qftestc -batch -run -exitcodeignoreexception -nomessagewindow ");
 			addDaemonParamsIfNeeded();
-			script.append(envVars.expand(s.getCustomParam()));
-			script.append(" -runlog %logdir%\\logs\\log_+b %suite");
-			script.append(i);
+			String[] customParams = s.getCustomParam().split(" ");
+			boolean customRunLogSet = false;
+			boolean customRunIdSet = false;
+			for (int j = 0; j < customParams.length; j++) {
+				String param = customParams[j];
+				if (param.equalsIgnoreCase("-runlog")) {
+					script.append("-runlog \"%logdir%\\logs\\"+envVars.expand(customParams[j+1])+"\" ");
+					customRunLogSet = true;
+					j++;
+				} else if (param.equalsIgnoreCase("-runid")) {
+					script.append("-runid \""+ envVars.expand(customParams[j+1])+"\" ");
+					customRunIdSet = true;
+					j++;
+				} else if (param.startsWith("-report")) {
+					if (reportParamHasValue(param)) {
+						j++;
+					}
+				} else {
+					script.append(envVars.expand(customParams[j])+" ");
+				}
+			}
+			if (!customRunLogSet) {
+				script.append("-runlog \"%logdir%\\logs\\log_+b\" ");
+			}
+			if (!customRunIdSet) {
+				script.append("-runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\" ");
+			}
+			script.append("%suite");
+			script.append(i++);
 			script.append("%\n");
-			i++;
+			script.append("@echo off\n");
 		}
 		script.append("if %errorlevel% LSS 0 ( set qfError=%errorlevel% )\n");
 	}
@@ -289,8 +314,37 @@ public class ScriptCreator {
 	 */
 	private void genreport() {
 		script.append("echo [qftest plugin] Generating reports...\n");
-		script.append("qftestc -batch -genreport -report.html %logdir%\\html "
-				+ "-report.junit %logdir%\\junit %logdir%\\logs\"\n");
+		script.append("@echo on\n");
+		script.append("qftestc -batch -genreport ");
+		
+		boolean customreportHTML = false;
+		boolean customreportJUnit = false;
+		for (Suites s : suitefield) {
+			String[] customParams = s.getCustomParam().split(" ");
+			for (int j = 0; j < customParams.length; j++) {
+				String param = customParams[j];
+				if (param.equalsIgnoreCase("-report.html")) {
+					script.append( param+" "+envVars.expand(customParams[j+1])+" ");
+					customreportHTML = true;
+					j++;
+				} else if (param.equalsIgnoreCase("-report.junit")) {
+					script.append( param+" "+envVars.expand(customParams[j+1])+" ");
+					customreportJUnit = true;
+					j++;
+				} else {
+					script.append(envVars.expand(customParams[j])+" ");
+				}
+			}	
+		}
+		
+		if (!customreportHTML) {
+			script.append("-report.html \"%logdir%\\html2\" ");
+		}
+		if (!customreportJUnit) {
+			script.append("-report.junit \"%logdir%\\junit\" ");
+		}
+		script.append("\"%logdir%\\logs\"\n\n");
+		script.append("@echo off\n");
 		script.append("if %errorlevel% LSS 0 ( set qfError=%errorlevel% )\n");
 	}
 
