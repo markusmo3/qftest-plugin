@@ -270,7 +270,7 @@ public class ScriptCreator {
 				}
 			}
 			script.append("@echo on\n");
-			script.append("qftestc -batch -run -exitcodeignoreexception -nomessagewindow ");
+			script.append("qftestc -batch -exitcodeignoreexception -nomessagewindow ");
 			addDaemonParamsIfNeeded();
 			String[] customParams = s.getCustomParam().split(" ");
 			boolean customRunLogSet = false;
