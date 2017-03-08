@@ -338,7 +338,7 @@ public class ScriptCreator {
 		}
 		
 		if (!customreportHTML) {
-			script.append("-report.html \"%logdir%\\html2\" ");
+			script.append("-report.html \"%logdir%\\html\" ");
 		}
 		if (!customreportJUnit) {
 			script.append("-report.junit \"%logdir%\\junit\" ");
