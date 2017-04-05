@@ -301,6 +301,9 @@ public class ScriptCreator {
 						iterator.next();
 					}
 				} else {
+					if(param.contains(" ")) {
+						param = "\""+param+"\"";
+					}
 					script.append(envVars.expand(param)+" ");
 				}
 			}
@@ -331,19 +334,22 @@ public class ScriptCreator {
 		boolean customreportHTML = false;
 		boolean customreportJUnit = false;
 		for (Suites s : suitefield) {
-			String[] customParams = s.getCustomParam().split(" ");
-			for (int j = 0; j < customParams.length; j++) {
-				String param = customParams[j];
+			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
+			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+				String param = iterator.next();
 				if (param.equalsIgnoreCase("-report.html")) {
-					script.append( param+" "+envVars.expand(customParams[j+1])+" ");
+					String value = iterator.next();
+					script.append( param+" "+envVars.expand(value)+" ");
 					customreportHTML = true;
-					j++;
 				} else if (param.equalsIgnoreCase("-report.junit")) {
-					script.append( param+" "+envVars.expand(customParams[j+1])+" ");
+					String value = iterator.next();
+					script.append( param+" "+envVars.expand(value)+" ");
 					customreportJUnit = true;
-					j++;
 				} else {
-					script.append(envVars.expand(customParams[j])+" ");
+					if(param.contains(" ")) {
+						param = "\""+param+"\"";
+					}
+					script.append(envVars.expand(param)+" ");
 				}
 			}	
 		}
@@ -497,6 +503,9 @@ public class ScriptCreator {
 						iterator.next();
 					}
 				} else {
+					if(param.contains(" ")) {
+						param = "\""+param+"\"";
+					}
 					script.append(envVars.expand(param)+" ");
 				}
 			}
@@ -557,19 +566,24 @@ public class ScriptCreator {
 		boolean customreportHTML = false;
 		boolean customreportJUnit = false;
 		for (Suites s : suitefield) {
-			String[] customParams = s.getCustomParam().split(" ");
-			for (int j = 0; j < customParams.length; j++) {
-				String param = customParams[j];
+			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
+			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+			    String param = iterator.next();
 				if (param.equalsIgnoreCase("-report.html")) {
-					script.append( param+" "+envVars.expand(customParams[j+1])+" ");
+					String value = iterator.next();
+					script.append( param+" "+envVars.expand(value)+" ");
 					customreportHTML = true;
-					j++;
 				} else if (param.equalsIgnoreCase("-report.junit")) {
-					script.append( param+" "+envVars.expand(customParams[j+1])+" ");
+					String value = iterator.next();
+					script.append( param+" "+envVars.expand(value)+" ");
 					customreportJUnit = true;
-					j++;
-				} else {
-					script.append(envVars.expand(customParams[j])+" ");
+				} else if (param.equalsIgnoreCase("-runlog")) {
+					iterator.next(); //ignore runlog param in report generation
+				}else {
+					if(param.contains(" ")) {
+						param = "\""+param+"\"";
+					}
+					script.append(envVars.expand(param)+" ");
 				}
 			}	
 		}
