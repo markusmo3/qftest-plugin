@@ -29,6 +29,10 @@ import hudson.tasks.BatchFile;
 import hudson.tasks.Shell;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -272,25 +276,32 @@ public class ScriptCreator {
 			script.append("@echo on\n");
 			script.append("qftestc -batch -exitcodeignoreexception -nomessagewindow ");
 			addDaemonParamsIfNeeded();
-			String[] customParams = s.getCustomParam().split(" ");
+			
+			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
+			//String[] customParams = s.getCustomParam().split(" ");
 			boolean customRunLogSet = false;
 			boolean customRunIdSet = false;
-			for (int j = 0; j < customParams.length; j++) {
-				String param = customParams[j];
+			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+			    String param = iterator.next();
 				if (param.equalsIgnoreCase("-runlog")) {
-					script.append("-runlog \"%logdir%\\logs\\"+envVars.expand(customParams[j+1])+"\" ");
+					String value = iterator.next();
+					if ((value.contains("\\")) ||(value.contains("/"))) {
+						script.append("-runlog \""+envVars.expand(value)+"\" ");
+					} else {
+						script.append("-runlog \"%logdir%\\logs\\"+envVars.expand(value)+"\" ");
+					}
+					
 					customRunLogSet = true;
-					j++;
 				} else if (param.equalsIgnoreCase("-runid")) {
-					script.append("-runid \""+ envVars.expand(customParams[j+1])+"\" ");
+					String value = iterator.next();
+					script.append("-runid \""+ envVars.expand(value)+"\" ");
 					customRunIdSet = true;
-					j++;
 				} else if (param.startsWith("-report")) {
 					if (reportParamHasValue(param)) {
-						j++;
+						iterator.next();
 					}
 				} else {
-					script.append(envVars.expand(customParams[j])+" ");
+					script.append(envVars.expand(param)+" ");
 				}
 			}
 			if (!customRunLogSet) {
@@ -462,26 +473,31 @@ public class ScriptCreator {
 			}
 			script.append("qftest -batch -exitcodeignoreexception -nomessagewindow ");
 			addDaemonParamsIfNeeded();
-
-			String[] customParams = s.getCustomParam().split(" ");
+			
+			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
+			
 			boolean customRunLogSet = false;
 			boolean customRunIdSet = false;
-			for (int j = 0; j < customParams.length; j++) {
-				String param = customParams[j];
+			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+			    String param = iterator.next();
 				if (param.equalsIgnoreCase("-runlog")) {
-					script.append("-runlog \"$LOGDIR/logs/"+envVars.expand(customParams[j+1])+"\" ");
+					String value = iterator.next();
+					if ((value.contains("\\")) ||(value.contains("/"))) {
+						script.append("-runlog \""+envVars.expand(value)+"\" ");
+					} else {
+						script.append("-runlog \"$LOGDIR/logs/"+envVars.expand(value)+"\" ");
+					}
 					customRunLogSet = true;
-					j++;
 				} else if (param.equalsIgnoreCase("-runid")) {
-					script.append("-runid \""+ envVars.expand(customParams[j+1])+"\" ");
+					String value = iterator.next();
+					script.append("-runid \""+ envVars.expand(value)+"\" ");
 					customRunIdSet = true;
-					j++;
 				} else if (param.startsWith("-report")) {
 					if (reportParamHasValue(param)) {
-						j++;
+						iterator.next();
 					}
 				} else {
-					script.append(envVars.expand(customParams[j])+" ");
+					script.append(envVars.expand(param)+" ");
 				}
 			}
 			if (!customRunLogSet) {
@@ -494,6 +510,31 @@ public class ScriptCreator {
 			script.append(i++);
 			script.append("\n");
 		}
+	}
+
+	/**
+	 * splits the given string at all whitespaces which are note 
+	 * surrounded by quotes or double quotes
+	 * @param params
+	 * @return
+	 */
+	private List<String> getCustomParamsAsList(String params) {
+		List<String> matchList = new ArrayList<String>();
+		Pattern regex = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'");
+		Matcher regexMatcher = regex.matcher(params);
+		while (regexMatcher.find()) {
+		    if (regexMatcher.group(1) != null) {
+		        // Add double-quoted string without the quotes
+		        matchList.add(regexMatcher.group(1));
+		    } else if (regexMatcher.group(2) != null) {
+		        // Add single-quoted string without the quotes
+		        matchList.add(regexMatcher.group(2));
+		    } else {
+		        // Add unquoted word
+		        matchList.add(regexMatcher.group());
+		    }
+		}
+		return matchList;
 	}
 
 	private void addDaemonParamsIfNeeded() {
