@@ -333,7 +333,8 @@ public class ScriptCreator {
 					if(param.contains(" ")) {
 						param = "\""+param+"\"";
 					}
-					script.append(envVars.expand(param)+" ");
+					script.append(envVars.expand(param));
+					addSpaceIfNecessary(param);
 				}
 			}
 			if (!customRunLogSet) {
@@ -378,7 +379,8 @@ public class ScriptCreator {
 					if(param.contains(" ")) {
 						param = "\""+param+"\"";
 					}
-					script.append(envVars.expand(param)+" ");
+					script.append(envVars.expand(param));
+					addSpaceIfNecessary(param);
 				}
 			}	
 		}
@@ -567,7 +569,8 @@ public class ScriptCreator {
 					if(param.contains(" ")) {
 						param = "\""+param+"\"";
 					}
-					script.append(envVars.expand(param)+" ");
+					script.append(envVars.expand(param));
+					addSpaceIfNecessary(param);		
 				}
 			}
 			if (!customRunLogSet) {
@@ -579,6 +582,12 @@ public class ScriptCreator {
 			script.append("$CURDIR/$SUITE");
 			script.append(i++);
 			script.append("\n");
+		}
+	}
+
+	private void addSpaceIfNecessary(String param) {
+		if (!envVars.expand(param).endsWith("=")) {
+			script.append(" ");
 		}
 	}
 
@@ -616,7 +625,8 @@ public class ScriptCreator {
 					if(param.contains(" ")) {
 						param = "\""+param+"\"";
 					}
-					script.append(envVars.expand(param)+" ");
+					script.append(envVars.expand(param));
+					addSpaceIfNecessary(param);
 				}
 			}
 			if (!customPkgDocSet) {
@@ -665,7 +675,8 @@ public class ScriptCreator {
 					if(param.contains(" ")) {
 						param = "\""+param+"\"";
 					}
-					script.append(envVars.expand(param)+" ");
+					script.append(envVars.expand(param));
+					addSpaceIfNecessary(param);
 				}
 			}	
 			if (!customPkgDocSet) {
@@ -743,7 +754,8 @@ public class ScriptCreator {
 					if(param.contains(" ")) {
 						param = "\""+param+"\"";
 					}
-					script.append(envVars.expand(param)+" ");
+					script.append(envVars.expand(param));
+					addSpaceIfNecessary(param);
 				}
 			}	
 		}
