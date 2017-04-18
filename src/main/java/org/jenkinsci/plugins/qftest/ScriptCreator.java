@@ -111,6 +111,35 @@ public class ScriptCreator {
 			this.createShell();
 	}
 
+	// for testdoc
+	public ScriptCreator(ArrayList<Suites> suitefield, String qfPath,
+			 String qfPathUnix, boolean customPathSelected,
+			 String customPath, boolean isUnix, EnvVars envVars) {
+		// not necessary
+		daemonport = "";
+		daemonhost = "";
+		daemonSelected = false;
+		customReportsSelected = false;
+		customReports = "";
+		
+		this.suitefield = suitefield;
+		this.envVars = envVars;
+		if (qfPath == null)
+		this.qfPath = "";
+		else
+		this.qfPath = qfPath;
+		if (qfPathUnix == null)
+		this.qfPathUnix = "";
+		else
+		this.qfPathUnix = qfPathUnix;
+		this.customPathSelected = customPathSelected;	
+		this.customPath = customPath;
+		if (!isUnix)
+		this.createGenDocScript();
+		else
+		this.createGenDocShell();
+		}
+	
 	/**
 	 * Returns the commandInterpreter
 	 *
@@ -396,6 +425,34 @@ public class ScriptCreator {
 		System.out.println(script.toString());
 		scriptFile = new Shell(script.toString());
 	}
+	
+	/**
+	 * Creates a run script for shell command call (gendoc)
+	 */
+	private void createGenDocShell() {
+		script = new StringBuilder();
+		logdirShell();
+		suitedirShell();
+		qftPathShell();
+		genDocRunnerShell();
+		setMarkShell();
+		scriptFile = new Shell(script.toString());
+	}
+	
+	/**
+	 * Creates script for batch file by calling several methods.
+	 */
+	private void createGenDocScript() {
+		script = new StringBuilder();
+		script.append("@echo off\n");
+		logdir();
+		suitedir();
+		qftPath();
+		genDocRunner();
+		setMark();
+		popd();
+		scriptFile = new BatchFile(script.toString());
+	}
 
 	/**
 	 * @see logdir()
@@ -424,8 +481,12 @@ public class ScriptCreator {
 			script.append(i++);
 			script.append("=\"");
 			script.append(s.getSuitename());
-			script.append(s.getSuitename().endsWith(".qft") ? "\"\n"
-					: "/*.qft\"\n");
+			if (!s.getSuitename().equals("*")) {
+				script.append(s.getSuitename().endsWith(".qft") ? "\"\n"
+						: "/*.qft\"\n");
+			} else {
+				script.append("\"\n");
+			}
 		}
 	}
 
@@ -521,6 +582,105 @@ public class ScriptCreator {
 		}
 	}
 
+	private void genDocRunnerShell() {
+		int i = 0;
+		for (Suites s : suitefield) {
+			if (customPathSelected || !qfPathUnix.isEmpty()) {
+				script.append("./");
+			}
+			script.append("qftest -batch -exitcodeignoreexception -nomessagewindow -gendoc ");
+			
+			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
+			
+			boolean customPkgDocSet = false;
+			boolean customTestDocSet = false;
+			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+			    String param = iterator.next();
+				if (param.equalsIgnoreCase("-pkgdoc")) {
+					String value = iterator.next();
+					if ((value.contains("\\")) || (value.contains("/"))) {
+						script.append("-pkgdoc \""+envVars.expand(value)+"\" ");
+					} else {
+						script.append("-pkgdoc \"$LOGDIR/logs/"+envVars.expand(value)+"\" ");
+					}
+					customPkgDocSet = true;
+				} else if (param.equalsIgnoreCase("-testdoc")) {
+					String value = iterator.next();
+					if ((value.contains("\\")) || (value.contains("/"))) {
+						script.append("-testdoc \""+envVars.expand(value)+"\" ");
+					} else {
+						script.append("-testdoc \"$LOGDIR/logs/"+envVars.expand(value)+"\" ");
+					}
+					customTestDocSet = true;
+				} else {
+					if(param.contains(" ")) {
+						param = "\""+param+"\"";
+					}
+					script.append(envVars.expand(param)+" ");
+				}
+			}
+			if (!customPkgDocSet) {
+				script.append("-pkgdoc \"$LOGDIR/logs\" ");
+			}
+			if (!customTestDocSet) {
+				script.append("-testdoc \"$LOGDIR/logs\" ");
+			}
+
+
+			script.append("$CURDIR/$SUITE");
+			script.append(i++);
+			script.append("\n");
+		}
+	}
+
+	private void genDocRunner() {
+		int i = 0;
+		script.append("echo [qftest plugin] Generating documentation...\n");
+		script.append("@echo on\n");
+		script.append("qftest -batch -exitcodeignoreexception -nomessagewindow -gendoc ");
+		
+		boolean customPkgDocSet = false;
+		boolean customTestDocSet = false;
+		for (Suites s : suitefield) {
+			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
+			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+				String param = iterator.next();
+				if (param.equalsIgnoreCase("-pkgdoc")) {
+					String value = iterator.next();
+					if ((value.contains("\\")) || (value.contains("/"))) {
+						script.append("-pkgdoc \""+envVars.expand(value)+"\" ");
+					} else {
+						script.append("-pkgdoc \"%logdir%/doc/"+envVars.expand(value)+"\" ");
+					}
+					customPkgDocSet = true;
+				} if (param.equalsIgnoreCase("-testdoc")) {
+					String value = iterator.next();
+					if ((value.contains("\\")) || (value.contains("/"))) {
+						script.append("-testdoc \""+envVars.expand(value)+"\" ");
+					} else {
+						script.append("-testdoc \"%logdir%/doc/"+envVars.expand(value)+"\" ");
+					}
+					customTestDocSet = true;
+				} else {
+					if(param.contains(" ")) {
+						param = "\""+param+"\"";
+					}
+					script.append(envVars.expand(param)+" ");
+				}
+			}	
+			if (!customPkgDocSet) {
+				script.append("-pkgdoc \"%logdir%\\doc\" ");
+			}
+			if (!customTestDocSet) {
+				script.append("-testdoc \"%logdir%\\doc\" ");
+			}
+			script.append("%suite");
+			script.append(i++);
+			script.append("%\n");
+		}
+		script.append("@echo off\n");
+	}
+	
 	/**
 	 * splits the given string at all whitespaces which are note 
 	 * surrounded by quotes or double quotes
