@@ -307,43 +307,29 @@ public class ScriptCreator {
 			addDaemonParamsIfNeeded();
 			
 			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
-			//String[] customParams = s.getCustomParam().split(" ");
 			boolean customRunLogSet = false;
 			boolean customRunIdSet = false;
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
 			    String param = iterator.next();
-				if (param.equalsIgnoreCase("-runlog")) {
-					String value = iterator.next();
-					if ((value.contains("\\")) ||(value.contains("/"))) {
-						script.append("-runlog \""+envVars.expand(value)+"\" ");
-					} else {
-						script.append("-runlog \"%logdir%\\logs\\"+envVars.expand(value)+"\" ");
-					}
-					
+				if (param.startsWith("-runlog")) {
 					customRunLogSet = true;
-				} else if (param.equalsIgnoreCase("-runid")) {
-					String value = iterator.next();
-					script.append("-runid \""+ envVars.expand(value)+"\" ");
+				} else if (param.startsWith("-runid")) {
 					customRunIdSet = true;
 				} else if (param.startsWith("-report")) {
 					if (reportParamHasValue(param)) {
-						iterator.next();
+						//ignore
 					}
 				} else {
-					if(param.contains(" ")) {
-						param = "\""+param+"\"";
-					}
 					script.append(envVars.expand(param));
-					addSpaceIfNecessary(param);
 				}
 			}
 			if (!customRunLogSet) {
-				script.append("-runlog \"%logdir%\\logs\\log_+b\" ");
+				script.append(" -runlog \"%logdir%\\logs\\log_+b\"");
 			}
 			if (!customRunIdSet) {
-				script.append("-runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\" ");
+				script.append(" -runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\"");
 			}
-			script.append("%suite");
+			script.append(" %suite");
 			script.append(i++);
 			script.append("%\n");
 			script.append("@echo off\n");
@@ -367,31 +353,23 @@ public class ScriptCreator {
 			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
 				String param = iterator.next();
-				if (param.equalsIgnoreCase("-report.html")) {
-					String value = iterator.next();
-					script.append( param+" "+envVars.expand(value)+" ");
+				if (param.startsWith("-report.html")) {
 					customreportHTML = true;
-				} else if (param.equalsIgnoreCase("-report.junit")) {
-					String value = iterator.next();
-					script.append( param+" "+envVars.expand(value)+" ");
+				} else if (param.startsWith("-report.junit")) {
 					customreportJUnit = true;
 				} else {
-					if(param.contains(" ")) {
-						param = "\""+param+"\"";
-					}
 					script.append(envVars.expand(param));
-					addSpaceIfNecessary(param);
 				}
 			}	
 		}
 		
 		if (!customreportHTML) {
-			script.append("-report.html \"%logdir%\\html\" ");
+			script.append(" -report.html \"%logdir%\\html\"");
 		}
 		if (!customreportJUnit) {
-			script.append("-report.junit \"%logdir%\\junit\" ");
+			script.append(" -report.junit \"%logdir%\\junit\"");
 		}
-		script.append("\"%logdir%\\logs\"\n\n");
+		script.append(" \"%logdir%\\logs\"\n\n");
 		script.append("@echo off\n");
 		script.append("if %errorlevel% LSS 0 ( set qfError=%errorlevel% )\n");
 	}
@@ -400,7 +378,7 @@ public class ScriptCreator {
 	 * Signals other builds, that this build is done
 	 */
 	private void setMark() {
-		script.append("echo delete > %logdir%\\deleteMark \n");
+		script.append("echo delete > \"%logdir%\\deleteMark\" \n");
 	}
 
 	/**
@@ -524,11 +502,11 @@ public class ScriptCreator {
 	
 	private boolean reportParamHasValue(String param)
 	{
-		return param.equalsIgnoreCase("-report") 
-		||	param.equalsIgnoreCase("-report.html")
-		||  param.equalsIgnoreCase("-report.junit")
-		||  param.equalsIgnoreCase("-report.xml")
-		||  param.equalsIgnoreCase("-report.name");
+		return param.startsWith("-report") 
+		||	param.startsWith("-report.html")
+		||  param.startsWith("-report.junit")
+		||  param.startsWith("-report.xml")
+		||  param.startsWith("-report.name");
 	}
 
 	/**
@@ -549,45 +527,27 @@ public class ScriptCreator {
 			boolean customRunIdSet = false;
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
 			    String param = iterator.next();
-				if (param.equalsIgnoreCase("-runlog")) {
-					String value = iterator.next();
-					if ((value.contains("\\")) ||(value.contains("/"))) {
-						script.append("-runlog \""+envVars.expand(value)+"\" ");
-					} else {
-						script.append("-runlog \"$LOGDIR/logs/"+envVars.expand(value)+"\" ");
-					}
+				if (param.startsWith("-runlog")) {
 					customRunLogSet = true;
-				} else if (param.equalsIgnoreCase("-runid")) {
-					String value = iterator.next();
-					script.append("-runid \""+ envVars.expand(value)+"\" ");
+				} else if (param.startsWith("-runid")) {
 					customRunIdSet = true;
 				} else if (param.startsWith("-report")) {
 					if (reportParamHasValue(param)) {
-						iterator.next();
+						//simply ignore param
 					}
 				} else {
-					if(param.contains(" ")) {
-						param = "\""+param+"\"";
-					}
 					script.append(envVars.expand(param));
-					addSpaceIfNecessary(param);		
 				}
 			}
 			if (!customRunLogSet) {
-				script.append("-runlog \"$LOGDIR/logs/log_+b\" ");
+				script.append(" -runlog \"$LOGDIR/logs/log_+b\"");
 			}
 			if (!customRunIdSet) {
-				script.append("-runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\" ");
+				script.append(" -runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\"");
 			}
-			script.append("$CURDIR/$SUITE");
+			script.append(" \"$CURDIR/$SUITE");
 			script.append(i++);
-			script.append("\n");
-		}
-	}
-
-	private void addSpaceIfNecessary(String param) {
-		if (!envVars.expand(param).endsWith("=")) {
-			script.append(" ");
+			script.append("\"\n");
 		}
 	}
 
@@ -605,41 +565,24 @@ public class ScriptCreator {
 			boolean customTestDocSet = false;
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
 			    String param = iterator.next();
-				if (param.equalsIgnoreCase("-pkgdoc")) {
-					String value = iterator.next();
-					if ((value.contains("\\")) || (value.contains("/"))) {
-						script.append("-pkgdoc \""+envVars.expand(value)+"\" ");
-					} else {
-						script.append("-pkgdoc \"$LOGDIR/logs/"+envVars.expand(value)+"\" ");
-					}
+				if (param.startsWith("-pkgdoc")) {
 					customPkgDocSet = true;
-				} else if (param.equalsIgnoreCase("-testdoc")) {
-					String value = iterator.next();
-					if ((value.contains("\\")) || (value.contains("/"))) {
-						script.append("-testdoc \""+envVars.expand(value)+"\" ");
-					} else {
-						script.append("-testdoc \"$LOGDIR/logs/"+envVars.expand(value)+"\" ");
-					}
+				} else if (param.startsWith("-testdoc")) {
 					customTestDocSet = true;
 				} else {
-					if(param.contains(" ")) {
-						param = "\""+param+"\"";
-					}
 					script.append(envVars.expand(param));
-					addSpaceIfNecessary(param);
 				}
 			}
 			if (!customPkgDocSet) {
-				script.append("-pkgdoc \"$LOGDIR/logs\" ");
+				script.append(" -pkgdoc \"$LOGDIR/docs\"");
 			}
 			if (!customTestDocSet) {
-				script.append("-testdoc \"$LOGDIR/logs\" ");
+				script.append(" -testdoc \"$LOGDIR/docs\"");
 			}
 
-
-			script.append("$CURDIR/$SUITE");
+			script.append(" \"$CURDIR/$SUITE");
 			script.append(i++);
-			script.append("\n");
+			script.append("\"\n");
 		}
 	}
 
@@ -655,37 +598,21 @@ public class ScriptCreator {
 			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
 				String param = iterator.next();
-				if (param.equalsIgnoreCase("-pkgdoc")) {
-					String value = iterator.next();
-					if ((value.contains("\\")) || (value.contains("/"))) {
-						script.append("-pkgdoc \""+envVars.expand(value)+"\" ");
-					} else {
-						script.append("-pkgdoc \"%logdir%/doc/"+envVars.expand(value)+"\" ");
-					}
+				if (param.startsWith("-pkgdoc")) {
 					customPkgDocSet = true;
-				} if (param.equalsIgnoreCase("-testdoc")) {
-					String value = iterator.next();
-					if ((value.contains("\\")) || (value.contains("/"))) {
-						script.append("-testdoc \""+envVars.expand(value)+"\" ");
-					} else {
-						script.append("-testdoc \"%logdir%/doc/"+envVars.expand(value)+"\" ");
-					}
+				} if (param.startsWith("-testdoc")) {
 					customTestDocSet = true;
 				} else {
-					if(param.contains(" ")) {
-						param = "\""+param+"\"";
-					}
 					script.append(envVars.expand(param));
-					addSpaceIfNecessary(param);
 				}
 			}	
 			if (!customPkgDocSet) {
-				script.append("-pkgdoc \"%logdir%\\doc\" ");
+				script.append(" -pkgdoc \"%logdir%\\docs\" ");
 			}
 			if (!customTestDocSet) {
-				script.append("-testdoc \"%logdir%\\doc\" ");
+				script.append(" -testdoc \"%logdir%\\docs\" ");
 			}
-			script.append("%suite");
+			script.append(" %suite");
 			script.append(i++);
 			script.append("%\n");
 		}
@@ -693,26 +620,22 @@ public class ScriptCreator {
 	}
 	
 	/**
-	 * splits the given string at all whitespaces which are note 
-	 * surrounded by quotes or double quotes
+	 * splits the given string at all parameters
+	 * TODO this should be implemented a bit more stable so that whitespace+"-"
+	 * is ignored during split if surrounded by quotes
 	 * @param params
 	 * @return
 	 */
-	private List<String> getCustomParamsAsList(String params) {
+	private static List<String> getCustomParamsAsList(String params) {
 		List<String> matchList = new ArrayList<String>();
-		Pattern regex = Pattern.compile("[^\\s\"']+|\"([^\"]*)\"|'([^']*)'");
-		Matcher regexMatcher = regex.matcher(params);
-		while (regexMatcher.find()) {
-		    if (regexMatcher.group(1) != null) {
-		        // Add double-quoted string without the quotes
-		        matchList.add(regexMatcher.group(1));
-		    } else if (regexMatcher.group(2) != null) {
-		        // Add single-quoted string without the quotes
-		        matchList.add(regexMatcher.group(2));
-		    } else {
-		        // Add unquoted word
-		        matchList.add(regexMatcher.group());
-		    }
+		String[] p = params.split(" -");
+		for (int i = 0; i < p.length; i++) {
+			if (i > 0) {
+				matchList.add(" -"+p[i]);
+			} else {
+				matchList.add(p[i]);
+			}
+			
 		}
 		return matchList;
 	}
@@ -740,40 +663,32 @@ public class ScriptCreator {
 			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
 			    String param = iterator.next();
-				if (param.equalsIgnoreCase("-report.html")) {
-					String value = iterator.next();
-					script.append( param+" "+envVars.expand(value)+" ");
+				if (param.startsWith("-report.html")) {
 					customreportHTML = true;
-				} else if (param.equalsIgnoreCase("-report.junit")) {
-					String value = iterator.next();
-					script.append( param+" "+envVars.expand(value)+" ");
+				} else if (param.startsWith("-report.junit")) {
 					customreportJUnit = true;
-				} else if (param.equalsIgnoreCase("-runlog")) {
-					iterator.next(); //ignore runlog param in report generation
+				} else if (param.startsWith("-runlog")) {
+                  //ignore runlog param in report generation
 				}else {
-					if(param.contains(" ")) {
-						param = "\""+param+"\"";
-					}
 					script.append(envVars.expand(param));
-					addSpaceIfNecessary(param);
 				}
 			}	
 		}
 		
 		if (!customreportHTML) {
-			script.append("-report.html \"$LOGDIR/html\" ");
+			script.append(" -report.html \"$LOGDIR/html\"");
 		}
 		if (!customreportJUnit) {
-			script.append("-report.junit \"$LOGDIR/junit\" ");
+			script.append(" -report.junit \"$LOGDIR/junit\"");
 		}
-		script.append("\"$LOGDIR/logs\"\n");
+		script.append(" \"$LOGDIR/logs\"\n");
 	}
 
 	/**
 	 * @see setMark()
 	 */
 	private void setMarkShell() {
-		script.append("touch $LOGDIR/deleteMark\n");
-		script.append("cd $CURDIR\n");
+		script.append("touch \"$LOGDIR/deleteMark\"\n");
+		script.append("cd \"$CURDIR\"\n");
 	}
 }
