@@ -309,17 +309,21 @@ public class ScriptCreator {
 			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
 			boolean customRunLogSet = false;
 			boolean customRunIdSet = false;
+
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+				boolean ignoreParam = false;
 			    String param = iterator.next();
-				if (param.startsWith("-runlog")) {
+				if (param.contains("-runlog")) {
 					customRunLogSet = true;
-				} else if (param.startsWith("-runid")) {
+				} else if (param.contains("-runid")) {
 					customRunIdSet = true;
-				} else if (param.startsWith("-report")) {
+				} else if (param.contains("-report")) {
 					if (reportParamHasValue(param)) {
+						ignoreParam = true;
 						//ignore
 					}
-				} else {
+				} 
+				if ( !ignoreParam) {
 					script.append(envVars.expand(param));
 				}
 			}
@@ -352,12 +356,18 @@ public class ScriptCreator {
 		for (Suites s : suitefield) {
 			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+				boolean ignoreParam = false;
 				String param = iterator.next();
-				if (param.startsWith("-report.html")) {
+				if (param.contains("-report.html")) {
 					customreportHTML = true;
-				} else if (param.startsWith("-report.junit")) {
+				} else if (param.contains("-report.junit")) {
 					customreportJUnit = true;
-				} else {
+				} else if (param.contains("-runlog")) {
+	                  //ignore runlog param in report generation
+					ignoreParam = true;
+				}
+				
+				if (!ignoreParam) {
 					script.append(envVars.expand(param));
 				}
 			}	
@@ -525,17 +535,21 @@ public class ScriptCreator {
 			
 			boolean customRunLogSet = false;
 			boolean customRunIdSet = false;
+
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+				boolean ignoreParam = false;
 			    String param = iterator.next();
-				if (param.startsWith("-runlog")) {
+				if (param.contains("-runlog")) {
 					customRunLogSet = true;
-				} else if (param.startsWith("-runid")) {
+				} else if (param.contains("-runid")) {
 					customRunIdSet = true;
-				} else if (param.startsWith("-report")) {
+				} else if (param.contains("-report")) {
 					if (reportParamHasValue(param)) {
 						//simply ignore param
+						ignoreParam = true;
 					}
-				} else {
+				} 
+				if (!ignoreParam) {
 					script.append(envVars.expand(param));
 				}
 			}
@@ -565,9 +579,9 @@ public class ScriptCreator {
 			boolean customTestDocSet = false;
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
 			    String param = iterator.next();
-				if (param.startsWith("-pkgdoc")) {
+				if (param.contains("-pkgdoc")) {
 					customPkgDocSet = true;
-				} else if (param.startsWith("-testdoc")) {
+				} else if (param.contains("-testdoc")) {
 					customTestDocSet = true;
 				} else {
 					script.append(envVars.expand(param));
@@ -598,9 +612,9 @@ public class ScriptCreator {
 			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
 				String param = iterator.next();
-				if (param.startsWith("-pkgdoc")) {
+				if (param.contains("-pkgdoc")) {
 					customPkgDocSet = true;
-				} if (param.startsWith("-testdoc")) {
+				} if (param.contains("-testdoc")) {
 					customTestDocSet = true;
 				} else {
 					script.append(envVars.expand(param));
@@ -662,14 +676,17 @@ public class ScriptCreator {
 		for (Suites s : suitefield) {
 			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+				boolean ignoreParam = false;
 			    String param = iterator.next();
-				if (param.startsWith("-report.html")) {
+				if (param.contains("-report.html")) {
 					customreportHTML = true;
 				} else if (param.startsWith("-report.junit")) {
 					customreportJUnit = true;
 				} else if (param.startsWith("-runlog")) {
                   //ignore runlog param in report generation
-				}else {
+					ignoreParam = true;
+				} 
+				if (!ignoreParam) {
 					script.append(envVars.expand(param));
 				}
 			}	
