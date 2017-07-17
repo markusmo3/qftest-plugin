@@ -336,6 +336,9 @@ public class ScriptCreator {
 				} else if (param.contains("-runlog")) {
 	                  //ignore runlog param in report generation
 					ignoreParam = true;
+				} else if (param.startsWith("-runid")) {
+	                  //ignore runid param in report generation
+						ignoreParam = true;
 				}
 				
 				if (!ignoreParam) {
@@ -535,6 +538,7 @@ public class ScriptCreator {
 			script.append(daemonhost);
 			script.append(" -daemonport ");
 			script.append(daemonport);
+			script.append(" ");
 		}
 	}
 
@@ -560,7 +564,10 @@ public class ScriptCreator {
 				} else if (param.startsWith("-runlog")) {
                   //ignore runlog param in report generation
 					ignoreParam = true;
-				} 
+				} else if (param.startsWith("-runid")) {
+	                  //ignore runid param in report generation
+						ignoreParam = true;
+				}
 				if (!ignoreParam) {
 					script.append(envVars.expand(param));
 				}
