@@ -336,7 +336,7 @@ public class ScriptCreator {
 				} else if (param.contains("-runlog")) {
 	                  //ignore runlog param in report generation
 					ignoreParam = true;
-				} else if (param.startsWith("-runid")) {
+				} else if (param.contains("-runid")) {
 	                  //ignore runid param in report generation
 						ignoreParam = true;
 				}
@@ -559,12 +559,12 @@ public class ScriptCreator {
 			    String param = iterator.next();
 				if (param.contains("-report.html")) {
 					customreportHTML = true;
-				} else if (param.startsWith("-report.junit")) {
+				} else if (param.contains("-report.junit")) {
 					customreportJUnit = true;
-				} else if (param.startsWith("-runlog")) {
+				} else if (param.contains("-runlog")) {
                   //ignore runlog param in report generation
 					ignoreParam = true;
-				} else if (param.startsWith("-runid")) {
+				} else if (param.contains("-runid")) {
 	                  //ignore runid param in report generation
 						ignoreParam = true;
 				}
