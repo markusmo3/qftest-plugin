@@ -342,7 +342,7 @@ public class ScriptCreator {
 				}
 				
 				if (!ignoreParam) {
-					script.append(envVars.expand(param));
+					script.append(" "+envVars.expand(param));
 				}
 			}	
 		}
@@ -569,7 +569,7 @@ public class ScriptCreator {
 						ignoreParam = true;
 				}
 				if (!ignoreParam) {
-					script.append(envVars.expand(param));
+					script.append(" "+envVars.expand(param));
 				}
 			}	
 		}
