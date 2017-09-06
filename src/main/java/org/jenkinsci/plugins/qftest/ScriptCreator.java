@@ -29,12 +29,16 @@ import hudson.tasks.BatchFile;
 import hudson.tasks.Shell;
 
 import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  *
  * This class creates a Batch/Shell script with all the information given by
  * the user
- * 
+ *
  * @author QFS, Sebastian Kleber
  */
 public class ScriptCreator {
@@ -109,7 +113,7 @@ public class ScriptCreator {
 
 	/**
 	 * Returns the commandInterpreter
-	 * 
+	 *
 	 * @return complete script which will be executed
 	 */
 	public CommandInterpreter getScript() {
@@ -126,10 +130,7 @@ public class ScriptCreator {
 		suitedir();
 		deleteLogs();
 		qftPath();
-		if (!daemonSelected)
-			runner();
-		else
-			daemonRunner();
+		runner();
 		genreport();
 		setMark();
 		popd();
@@ -144,9 +145,9 @@ public class ScriptCreator {
 		if (customReportsSelected)
 			reports = customReports;
 		script.append("echo [qftest plugin] Setting directories...\n");
-		script.append("set logdir=\"%CD%\\");
+		script.append("set logdir=%CD%\\");
 		script.append(reports);
-		script.append("\\%JOB_NAME%\\%BUILD_NUMBER%\"\n");
+		script.append("\\%JOB_NAME%\\%BUILD_NUMBER%\n");
 		script.append("set deletedir=\"");
 		script.append(reports);
 		script.append("\\%JOB_NAME%\\\"\n");
@@ -246,61 +247,67 @@ public class ScriptCreator {
 		int i = 0;
 		String slash = "\\";
 		for (Suites s : suitefield) {
-			if (s.getSuitename().contains(".qft")) {
+			String suiteName = s.getSuitename();
+			if (suiteName.contains(".qft")) {
 				script.append("echo [qftest plugin] Running test-suite ");
 				script.append(s.getSuitename());
 				script.append(" ...\n");
 			} else {
-				if (s.getSuitename().contains("/")) {
-					slash = "/";
+				if (daemonSelected) {
+					script.append("echo [qftest plugin] WARNING: You want to run "
+							+ "all test-suites in folder \\");
+					script.append(suiteName);
+					script.append("\\ in daemon mode.\n");
+					script.append("echo [qftest plugin] WARNING: Daemon mode does "
+							+ "not support the execution of multiple test-suites at "
+							+ "once, so only one test-suite will be run.\n");
+				} else {
+					if (suiteName.contains("/")) {
+						slash = "/";
+					}
+					script.append("echo [qftest plugin] Running all test-suites in"
+							+ " directory %WORKSPACE%");
+					script.append(slash);
+					script.append(suiteName);
+					script.append(slash);
+					script.append(" ...\n");
 				}
-				script.append("echo [qftest plugin] Running all test-suites in"
-						+ " directory %WORKSPACE%");
-				script.append(slash);
-				script.append(s.getSuitename());
-				script.append(slash);
-				script.append(" ...\n");
 			}
-			script.append("qftestc -batch -run -exitcodeignoreexception "
-					+ "-runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\" ");
-			script.append(envVars.expand(s.getCustomParam()));
-			script.append(" -runlog %logdir%\\logs\\log_+b %suite");
-			script.append(i);
-			script.append("%\n");
-			i++;
-		}
-		script.append("if %errorlevel% LSS 0 ( set qfError=%errorlevel% )\n");
-	}
+			script.append("@echo on\n");
+			script.append("qftestc -batch -exitcodeignoreexception -nomessagewindow ");
+			addDaemonParamsIfNeeded();
+			
+			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
+			boolean customRunLogSet = false;
+			boolean customRunIdSet = false;
 
-	/**
-	 * Calls QF-Test in daemon mode and runs all the suites with their CLAs
-	 */
-	private void daemonRunner() {
-		int i = 0;
-		for (Suites s : suitefield) {
-			if (!s.getSuitename().contains(".qft")) {
-				script.append("echo [qftest plugin] WARNING: You want to run "
-						+ "all test-suites in folder \\");
-				script.append(s.getSuitename());
-				script.append("\\ in daemon mode.\n");
-				script.append("echo [qftest plugin] WARNING: Daemon mode does "
-						+ "not support the execution of multiple test-suites at "
-						+ "once, so only one test-suite will be run.\n");
+			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+				boolean ignoreParam = false;
+			    String param = iterator.next();
+				if (param.contains("-runlog")) {
+					customRunLogSet = true;
+				} else if (param.contains("-runid")) {
+					customRunIdSet = true;
+				} else if (param.contains("-report")) {
+					if (reportParamHasValue(param)) {
+						ignoreParam = true;
+						//ignore
+					}
+				} 
+				if ( !ignoreParam) {
+					script.append(envVars.expand(param));
+				}
 			}
-			script.append("echo [qftest plugin] Running test-suite ");
-			script.append(s.getSuitename());
-			script.append(" ...\n");
-			script.append("qftestc -batch -calldaemon -daemonhost ");
-			script.append(daemonhost);
-			script.append(" -daemonport ");
-			script.append(daemonport);
-			script.append(" -exitcodeignoreexception"
-					+ " -runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\" ");
-			script.append(envVars.expand(s.getCustomParam()));
-			script.append(" -runlog %logdir%\\logs\\log_+b %suite");
-			script.append(i);
+			if (!customRunLogSet) {
+				script.append(" -runlog \"%logdir%\\logs\\log_+b\"");
+			}
+			if (!customRunIdSet) {
+				script.append(" -runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\"");
+			}
+			script.append(" %suite");
+			script.append(i++);
 			script.append("%\n");
-			i++;
+			script.append("@echo off\n");
 		}
 		script.append("if %errorlevel% LSS 0 ( set qfError=%errorlevel% )\n");
 	}
@@ -312,8 +319,42 @@ public class ScriptCreator {
 	 */
 	private void genreport() {
 		script.append("echo [qftest plugin] Generating reports...\n");
-		script.append("qftestc -batch -genreport -report.html %logdir%\\html "
-				+ "-report.junit %logdir%\\junit %logdir%\\logs\"\n");
+		script.append("@echo on\n");
+		script.append("qftestc -batch -genreport ");
+		
+		boolean customreportHTML = false;
+		boolean customreportJUnit = false;
+		for (Suites s : suitefield) {
+			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
+			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+				boolean ignoreParam = false;
+				String param = iterator.next();
+				if (param.contains("-report.html")) {
+					customreportHTML = true;
+				} else if (param.contains("-report.junit")) {
+					customreportJUnit = true;
+				} else if (param.contains("-runlog")) {
+	                  //ignore runlog param in report generation
+					ignoreParam = true;
+				} else if (param.contains("-runid")) {
+	                  //ignore runid param in report generation
+						ignoreParam = true;
+				}
+				
+				if (!ignoreParam) {
+					script.append(" "+envVars.expand(param));
+				}
+			}	
+		}
+		
+		if (!customreportHTML) {
+			script.append(" -report.html \"%logdir%\\html\"");
+		}
+		if (!customreportJUnit) {
+			script.append(" -report.junit \"%logdir%\\junit\"");
+		}
+		script.append(" \"%logdir%\\logs\"\n\n");
+		script.append("@echo off\n");
 		script.append("if %errorlevel% LSS 0 ( set qfError=%errorlevel% )\n");
 	}
 
@@ -321,7 +362,7 @@ public class ScriptCreator {
 	 * Signals other builds, that this build is done
 	 */
 	private void setMark() {
-		script.append("echo delete > %logdir%\\deleteMark \n");
+		script.append("echo delete > \"%logdir%\\deleteMark\" \n");
 	}
 
 	/**
@@ -342,10 +383,7 @@ public class ScriptCreator {
 		suitedirShell();
 		deleteLogsShell();
 		qftPathShell();
-		if (!daemonSelected)
-			runnerShell();
-		else
-			daemonRunnerShell();
+		runnerShell();
 		genreportShell();
 		setMarkShell();
 		System.out.println(script.toString());
@@ -379,8 +417,12 @@ public class ScriptCreator {
 			script.append(i++);
 			script.append("=\"");
 			script.append(s.getSuitename());
-			script.append(s.getSuitename().endsWith(".qft") ? "\"\n"
-					: "/*.qft\"\n");
+			if (!s.getSuitename().equals("*")) {
+				script.append(s.getSuitename().endsWith(".qft") ? "\"\n"
+						: "/*.qft\"\n");
+			} else {
+				script.append("\"\n");
+			}
 		}
 	}
 
@@ -413,44 +455,90 @@ public class ScriptCreator {
 			script.append("[ ! -f \"$PWD/qftest\" ] && exit -10\n");
 		}
 	}
+	
+	private boolean reportParamHasValue(String param)
+	{
+		return param.startsWith("-report") 
+		||	param.startsWith("-report.html")
+		||  param.startsWith("-report.junit")
+		||  param.startsWith("-report.xml")
+		||  param.startsWith("-report.name");
+	}
 
 	/**
 	 * @see runner()
 	 */
 	private void runnerShell() {
 		int i = 0;
-		if (customPathSelected || !qfPathUnix.isEmpty())
-			script.append("./");
 		for (Suites s : suitefield) {
-			script.append("qftest -batch -exitcodeignoreexception "
-					+ "-runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\" ");
-			script.append(envVars.expand(s.getCustomParam()));
-			script.append(" -runlog \"$LOGDIR/logs/log_+b\" $CURDIR/$SUITE");
+			if (customPathSelected || !qfPathUnix.isEmpty()) {
+				script.append("./");
+			}
+			script.append("qftest -batch -exitcodeignoreexception -nomessagewindow ");
+			addDaemonParamsIfNeeded();
+			
+			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
+			
+			boolean customRunLogSet = false;
+			boolean customRunIdSet = false;
+
+			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+				boolean ignoreParam = false;
+			    String param = iterator.next();
+				if (param.contains("-runlog")) {
+					customRunLogSet = true;
+				} else if (param.contains("-runid")) {
+					customRunIdSet = true;
+				} else if (param.contains("-report")) {
+					if (reportParamHasValue(param)) {
+						//simply ignore param
+						ignoreParam = true;
+					}
+				} 
+				if (!ignoreParam) {
+					script.append(envVars.expand(param));
+				}
+			}
+			if (!customRunLogSet) {
+				script.append(" -runlog \"$LOGDIR/logs/log_+b\"");
+			}
+			if (!customRunIdSet) {
+				script.append(" -runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\"");
+			}
+			script.append(" \"$CURDIR/$SUITE");
 			script.append(i++);
-			script.append("\n");
+			script.append("\"\n");
 		}
 	}
-
+	
 	/**
-	 * Creates the batch call script for daemon test
-	 * 
-	 * @see runner
+	 * splits the given string at all parameters
+	 * TODO this should be implemented a bit more stable so that whitespace+"-"
+	 * is ignored during split if surrounded by quotes
+	 * @param params
+	 * @return
 	 */
-	private void daemonRunnerShell() {
-		int i = 0;
-		if (customPathSelected || !qfPathUnix.isEmpty())
-			script.append("./");
-		for (Suites s : suitefield) {
-			script.append("qftest -batch -calldaemon -daemonhost ");
+	private static List<String> getCustomParamsAsList(String params) {
+		List<String> matchList = new ArrayList<String>();
+		String[] p = params.split(" -");
+		for (int i = 0; i < p.length; i++) {
+			if (i > 0) {
+				matchList.add(" -"+p[i]);
+			} else {
+				matchList.add(p[i]);
+			}
+			
+		}
+		return matchList;
+	}
+
+	private void addDaemonParamsIfNeeded() {
+		if (daemonSelected) {
+			script.append("-calldaemon -daemonhost ");
 			script.append(daemonhost);
 			script.append(" -daemonport ");
 			script.append(daemonport);
-			script.append(" -exitcodeignoreexception "
-					+ "-runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\" ");
-			script.append(envVars.expand(s.getCustomParam()));
-			script.append(" -runlog \"$LOGDIR/logs/log_+b\" $CURDIR/$SUITE");
-			script.append(i++);
-			script.append("\n");
+			script.append(" ");
 		}
 	}
 
@@ -461,15 +549,45 @@ public class ScriptCreator {
 		if (customPathSelected) {
 			script.append("./");
 		}
-		script.append("qftest -batch -genreport -report.html \"$LOGDIR/html\" "
-				+ "-report.junit \"$LOGDIR/junit\" \"$LOGDIR/logs\"\n");
+		script.append("qftest -batch -genreport ");
+		boolean customreportHTML = false;
+		boolean customreportJUnit = false;
+		for (Suites s : suitefield) {
+			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
+			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+				boolean ignoreParam = false;
+			    String param = iterator.next();
+				if (param.contains("-report.html")) {
+					customreportHTML = true;
+				} else if (param.contains("-report.junit")) {
+					customreportJUnit = true;
+				} else if (param.contains("-runlog")) {
+                  //ignore runlog param in report generation
+					ignoreParam = true;
+				} else if (param.contains("-runid")) {
+	                  //ignore runid param in report generation
+						ignoreParam = true;
+				}
+				if (!ignoreParam) {
+					script.append(" "+envVars.expand(param));
+				}
+			}	
+		}
+		
+		if (!customreportHTML) {
+			script.append(" -report.html \"$LOGDIR/html\"");
+		}
+		if (!customreportJUnit) {
+			script.append(" -report.junit \"$LOGDIR/junit\"");
+		}
+		script.append(" \"$LOGDIR/logs\"\n");
 	}
 
 	/**
 	 * @see setMark()
 	 */
 	private void setMarkShell() {
-		script.append("touch $LOGDIR/deleteMark\n");
-		script.append("cd $CURDIR\n");
+		script.append("touch \"$LOGDIR/deleteMark\"\n");
+		script.append("cd \"$CURDIR\"\n");
 	}
 }
