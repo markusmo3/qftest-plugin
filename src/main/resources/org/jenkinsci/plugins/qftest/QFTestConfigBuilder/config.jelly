@@ -27,7 +27,7 @@
   <f:advanced>
     <f:block>
       <f:optionalBlock title="Use specific QF-Test version" field="customPath" checked="${instance.specificQFTestVersion}">
-        <f:entry title="Path for qftest executable">
+        <f:entry title="Path to version specific QF-Test folder">
             <f:textbox value="${instance.customPath}" field="path"/>
         </f:entry>
       </f:optionalBlock>
