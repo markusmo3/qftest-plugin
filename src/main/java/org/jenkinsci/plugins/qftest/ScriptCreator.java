@@ -28,6 +28,9 @@ import hudson.tasks.CommandInterpreter;
 import hudson.tasks.BatchFile;
 import hudson.tasks.Shell;
 
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -505,10 +508,54 @@ public class ScriptCreator {
 			if (!customRunIdSet) {
 				script.append(" -runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\"");
 			}
-			script.append(" \"$CURDIR/$SUITE");
-			script.append(i++);
-			script.append("\"\n");
+			
+			appendSuites(s.getSuitename());
 		}
+	}
+	
+	void appendSuites(String suitename) {
+		File file = new File(suitename);
+		if (file.isFile()) {
+			script.append(" \""+suitename+"\"");				
+		} else {
+			//prepend workspace folder to see if the file can be found there
+			hudson.FilePath workspace = hudson.model.Executor.currentExecutor().getCurrentWorkspace();
+			String workspacedir = workspace.getRemote();
+			File fileInWorkSpace = new File (workspacedir + File.separator+suitename);
+			if (fileInWorkSpace.isFile()) {
+				script.append(" \""+fileInWorkSpace.getAbsolutePath()+"\"");				
+			} else { //probably a folder or special placeholder
+				File [] files = null;
+				if (file.isDirectory()) {
+					files = getAllSuitesInDirectory(file);
+				} else {
+					if (fileInWorkSpace.isDirectory()) {
+						files = getAllSuitesInDirectory(fileInWorkSpace);
+					} else if (suitename.equals("*")) {
+						//look for all files in workspace folder
+						files = getAllSuitesInDirectory(new File(workspacedir));
+					} else {
+						System.err.println("this point should never be reached");
+					}
+				}
+				for (File qftfile : files) {
+				    script.append(" \""+qftfile+"\"");
+				}	
+			}
+		}
+		script.append("\n");	
+	}	
+	
+	
+	File[] getAllSuitesInDirectory(File dir) 
+	{
+		File[] files = dir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.getName().toLowerCase().endsWith(".qft") ;
+            }
+        });
+		return files;
 	}
 	
 	/**
