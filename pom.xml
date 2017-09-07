@@ -8,11 +8,7 @@
   </parent>
 
   <artifactId>qftest</artifactId>
-<<<<<<< HEAD
   <version>1.0.10-SNAPSHOT</version>
-=======
-  <version>1.0.10</version>
->>>>>>> updated pom
   <packaging>hpi</packaging>
   <name>QF-Test Plugin</name>
   <url>https://wiki.jenkins-ci.org/display/JENKINS/QF-Test+Plugin</url>
