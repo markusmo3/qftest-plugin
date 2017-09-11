@@ -535,9 +535,14 @@ public class ScriptCreator {
 				} else {
 					if (fileInWorkSpace.isDirectory()) {
 						files = getAllSuitesInDirectory(fileInWorkSpace);
-					} else if (suitename.equals("*")) {
-						//look for all files in workspace folder
-						files = getAllSuitesInDirectory(new File(workspacedir));
+					} else if (suitename.contains("*")) {
+						int index = suitename.indexOf("*");
+						String subfolder = "";
+						if (index > 0) {
+							subfolder = suitename.substring(0, index);
+						}
+						//look for all files in folder
+						files = getAllSuitesInDirectory(new File(workspacedir+File.separator+subfolder));
 					} else {
 						System.err.println("this point should never be reached");
 						return;
