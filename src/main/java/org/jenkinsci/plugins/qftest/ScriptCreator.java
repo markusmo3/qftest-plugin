@@ -24,6 +24,7 @@
 package org.jenkinsci.plugins.qftest;
 
 import hudson.EnvVars;
+import hudson.model.Executor;
 import hudson.tasks.CommandInterpreter;
 import hudson.tasks.BatchFile;
 import hudson.tasks.Shell;
@@ -307,9 +308,7 @@ public class ScriptCreator {
 			if (!customRunIdSet) {
 				script.append(" -runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\"");
 			}
-			script.append(" %suite");
-			script.append(i++);
-			script.append("%\n");
+			appendSuites(s.getSuitename());
 			script.append("@echo off\n");
 		}
 		script.append("if %errorlevel% LSS 0 ( set qfError=%errorlevel% )\n");
@@ -519,7 +518,12 @@ public class ScriptCreator {
 			script.append(" \""+suitename+"\"");				
 		} else {
 			//prepend workspace folder to see if the file can be found there
-			hudson.FilePath workspace = hudson.model.Executor.currentExecutor().getCurrentWorkspace();
+			Executor executor = hudson.model.Executor.currentExecutor();
+			if (executor == null) {
+				System.err.println("cannot get currectExecutor from Jenkins.");
+				return;
+			} 
+			hudson.FilePath workspace = executor.getCurrentWorkspace();					
 			String workspacedir = workspace.getRemote();
 			File fileInWorkSpace = new File (workspacedir + File.separator+suitename);
 			if (fileInWorkSpace.isFile()) {
@@ -536,6 +540,7 @@ public class ScriptCreator {
 						files = getAllSuitesInDirectory(new File(workspacedir));
 					} else {
 						System.err.println("this point should never be reached");
+						return;
 					}
 				}
 				for (File qftfile : files) {
