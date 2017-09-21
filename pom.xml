@@ -6,9 +6,9 @@
     <artifactId>plugin</artifactId>
     <version>2.25</version>
   </parent>
-
+  
   <artifactId>qftest</artifactId>
-  <version>1.0.13-SNAPSHOT</version>
+  <version>1.0.14-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>QF-Test Plugin</name>
   <url>https://wiki.jenkins-ci.org/display/JENKINS/QF-Test+Plugin</url>
