@@ -241,7 +241,7 @@ public class QFTestConfigBuilder extends Builder {
 				.getQfPath(), getDescriptor().getQfPathUnix(),
 				specificQFTestVersion, customReportTempDirectory,
 				daemonSelected, customPath, customReports, daemonhost,
-				daemonport, launcher.isUnix(), envVars);
+				daemonport, launcher.isUnix(), envVars, listener, build);
 		try {
 			return script.getScript().perform(build, launcher, listener);
 		} catch (InterruptedException e) {
