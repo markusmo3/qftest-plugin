@@ -123,12 +123,13 @@ public class ScriptCreator {
 		this.isUnix = isUnix;
 		this.listener = listener;
 		this.build = build;
-		
-		if (isUnixPath(build.getWorkspace())) {
-			separator = "/";
+		FilePath ws = build.getWorkspace();
+		if (ws != null && !isUnixPath(ws)) {
+			separator = "\\";	
 		} else {
-			separator = "\\";
-		}
+			separator = "/";
+		}	
+
 		
 		if (!this.isUnix) {
 			this.createScript();
@@ -551,9 +552,16 @@ public class ScriptCreator {
 	
 	void appendSuites(String suitename) {
 		String workspacedir = getWorkspaceDir();  // probably the same as build.getWorkspace();
-
-		VirtualChannel channel = build.getWorkspace().getChannel();
-	
+        FilePath ws = build.getWorkspace();
+        if (ws == null) {
+			listener.getLogger().println("[qftest plugin] ERROR: unable to determine workspace");
+        		return;
+        }
+		VirtualChannel channel = ws.getChannel();
+		if (channel == null) {
+			listener.getLogger().println("[qftest plugin] ERROR: unable to get the build channel");
+			return;
+		}
 		FilePath file = new hudson.FilePath(channel, suitename);
 		
 		try {
