@@ -123,14 +123,12 @@ public class ScriptCreator {
 		this.isUnix = isUnix;
 		this.listener = listener;
 		this.build = build;
-		FilePath ws = build.getWorkspace();
-		if (ws != null && !isUnixPath(ws)) {
+		if (!isUnix) {
 			separator = "\\";	
 		} else {
 			separator = "/";
 		}	
 
-		
 		if (!this.isUnix) {
 			this.createScript();
 		} else {
