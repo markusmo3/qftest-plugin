@@ -331,14 +331,12 @@ public class ScriptCreator {
 				script.append(" -runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\"");
 			}
 			
-			
 			if (daemonSelected) {
-				script.append(" "+s.getSuitename()+" ");
+				script.append(" \""+getWorkspaceDir()+ separator + s.getSuitename()+"\" ");
 			} else {
 				appendSuites(s.getSuitename());
-				script.append("\n");
 			}
-			script.append("@echo off\n");
+			script.append("\n@echo off\n");
 		}
 		script.append("if %errorlevel% LSS 0 ( set qfError=%errorlevel% )\n");
 	}
@@ -538,7 +536,7 @@ public class ScriptCreator {
 			}
 			
 			if (daemonSelected) {
-				script.append(" "+s.getSuitename()+" ");
+				script.append(" \""+ getWorkspaceDir() + separator + s.getSuitename()+"\" ");
 			} else {
 				appendSuites(s.getSuitename());
 			}
