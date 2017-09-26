@@ -171,7 +171,7 @@ public class ScriptCreator {
 		if (customReportsSelected)
 			reports = customReports;
 		script.append("echo [qftest plugin] Setting directories...\n");
-		script.append("set logdir=%CD%\\");
+		script.append("set logdir="+getWorkspaceDir()+"\\");
 		script.append(reports);
 		script.append("\\%JOB_NAME%\\%BUILD_NUMBER%\n");
 		script.append("set deletedir=\"");
@@ -330,7 +330,14 @@ public class ScriptCreator {
 			if (!customRunIdSet) {
 				script.append(" -runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\"");
 			}
-			appendSuites(s.getSuitename());
+			
+			
+			if (daemonSelected) {
+				script.append(" "+s.getSuitename()+" ");
+			} else {
+				appendSuites(s.getSuitename());
+				script.append("\n");
+			}
 			script.append("@echo off\n");
 		}
 		script.append("if %errorlevel% LSS 0 ( set qfError=%errorlevel% )\n");
@@ -422,13 +429,13 @@ public class ScriptCreator {
 		if (customReportsSelected) {
 			reports = customReports;
 		}
-		script.append("LOGDIR=\"$PWD/");
+		script.append("LOGDIR=\""+getWorkspaceDir()+"/");
 		script.append(reports);
 		script.append("/$JOB_NAME/$BUILD_NUMBER\"\n");
-		script.append("DELETEDIR=\"$PWD/");
+		script.append("DELETEDIR=\""+getWorkspaceDir()+"/");
 		script.append(reports);
 		script.append("/$JOB_NAME/\"\n");
-		script.append("CURDIR=\"$PWD\"\n");
+		script.append("CURDIR=\""+getWorkspaceDir()+"\"\n");
 	}
 
 	/**
@@ -530,7 +537,12 @@ public class ScriptCreator {
 				script.append(" -runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\"");
 			}
 			
-			appendSuites(s.getSuitename());
+			if (daemonSelected) {
+				script.append(" "+s.getSuitename()+" ");
+			} else {
+				appendSuites(s.getSuitename());
+			}
+			script.append("\n");	
 		}
 	}
 	
