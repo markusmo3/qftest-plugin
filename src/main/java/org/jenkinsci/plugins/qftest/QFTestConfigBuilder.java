@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015 Quality First Software GmbH
+ * Copyright (c) 2017 Quality First Software GmbH
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -241,7 +241,7 @@ public class QFTestConfigBuilder extends Builder {
 				.getQfPath(), getDescriptor().getQfPathUnix(),
 				specificQFTestVersion, customReportTempDirectory,
 				daemonSelected, customPath, customReports, daemonhost,
-				daemonport, launcher.isUnix(), envVars);
+				daemonport, launcher.isUnix(), envVars, listener, build);
 		try {
 			return script.getScript().perform(build, launcher, listener);
 		} catch (InterruptedException e) {

@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright (c) 2015 Quality First Software GmbH
+ * Copyright (c) 2017 Quality First Software GmbH
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,11 @@
 package org.jenkinsci.plugins.qftest;
 
 import hudson.EnvVars;
+import hudson.FilePath;
+import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
 import hudson.model.Executor;
+import hudson.remoting.VirtualChannel;
 import hudson.tasks.CommandInterpreter;
 import hudson.tasks.BatchFile;
 import hudson.tasks.Shell;
@@ -32,6 +36,7 @@ import hudson.tasks.Shell;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FilenameFilter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -60,6 +65,10 @@ public class ScriptCreator {
 	private final String daemonhost;
 	private final String daemonport;
 	private final EnvVars envVars;
+	private final boolean isUnix;
+	private final BuildListener listener;
+	private final AbstractBuild build;
+	private String separator;
 
 	/**
 	 * CTOR
@@ -86,12 +95,14 @@ public class ScriptCreator {
 *            Daemonport
 	 * @param isUnix
 	 * @param envVars
+	 * @param listener
+	 * @param build
 	 */
 	public ScriptCreator(ArrayList<Suites> suitefield, String qfPath,
 						 String qfPathUnix, boolean customPathSelected,
 						 boolean customReportsSelected, boolean daemonSelected,
 						 String customPath, String customReports, String daemonhost,
-						 String daemonport, boolean isUnix, EnvVars envVars) {
+						 String daemonport, boolean isUnix, EnvVars envVars, BuildListener listener, AbstractBuild build) {
 		this.suitefield = suitefield;
 		this.envVars = envVars;
 		if (qfPath == null)
@@ -109,10 +120,21 @@ public class ScriptCreator {
 		this.customReports = customReports;
 		this.daemonhost = daemonhost;
 		this.daemonport = daemonport;
-		if (!isUnix)
+		this.isUnix = isUnix;
+		this.listener = listener;
+		this.build = build;
+		if (!isUnix) {
+			separator = "\\";	
+		} else {
+			separator = "/";
+		}	
+
+		if (!this.isUnix) {
 			this.createScript();
-		else
+		} else {
 			this.createShell();
+		}
+			
 	}
 
 	/**
@@ -149,7 +171,7 @@ public class ScriptCreator {
 		if (customReportsSelected)
 			reports = customReports;
 		script.append("echo [qftest plugin] Setting directories...\n");
-		script.append("set logdir=%CD%\\");
+		script.append("set logdir="+getWorkspaceDir()+"\\");
 		script.append(reports);
 		script.append("\\%JOB_NAME%\\%BUILD_NUMBER%\n");
 		script.append("set deletedir=\"");
@@ -308,8 +330,13 @@ public class ScriptCreator {
 			if (!customRunIdSet) {
 				script.append(" -runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\"");
 			}
-			appendSuites(s.getSuitename());
-			script.append("@echo off\n");
+			
+			if (daemonSelected) {
+				script.append(" \""+getWorkspaceDir()+ separator + s.getSuitename()+"\" ");
+			} else {
+				appendSuites(s.getSuitename());
+			}
+			script.append("\n@echo off\n");
 		}
 		script.append("if %errorlevel% LSS 0 ( set qfError=%errorlevel% )\n");
 	}
@@ -400,13 +427,13 @@ public class ScriptCreator {
 		if (customReportsSelected) {
 			reports = customReports;
 		}
-		script.append("LOGDIR=\"$PWD/");
+		script.append("LOGDIR=\""+getWorkspaceDir()+"/");
 		script.append(reports);
 		script.append("/$JOB_NAME/$BUILD_NUMBER\"\n");
-		script.append("DELETEDIR=\"$PWD/");
+		script.append("DELETEDIR=\""+getWorkspaceDir()+"/");
 		script.append(reports);
 		script.append("/$JOB_NAME/\"\n");
-		script.append("CURDIR=\"$PWD\"\n");
+		script.append("CURDIR=\""+getWorkspaceDir()+"\"\n");
 	}
 
 	/**
@@ -508,63 +535,98 @@ public class ScriptCreator {
 				script.append(" -runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\"");
 			}
 			
-			appendSuites(s.getSuitename());
+			if (daemonSelected) {
+				script.append(" \""+ getWorkspaceDir() + separator + s.getSuitename()+"\" ");
+			} else {
+				appendSuites(s.getSuitename());
+			}
+			script.append("\n");	
 		}
 	}
 	
+	String getWorkspaceDir() 
+	{
+		String workspace =  envVars.expand("$WORKSPACE");
+		if (workspace == null) {
+			listener.getLogger().println("[qftest plugin] ERROR: Can't determine Workspace");
+		}
+		return workspace;
+	}
+	
+	boolean isUnixPath(FilePath file)
+	{
+		return file.getRemote().indexOf("\\")==-1;
+	}
+	
 	void appendSuites(String suitename) {
-		File file = new File(suitename);
-		if (file.isFile()) {
-			script.append(" \""+suitename+"\"");				
-		} else {
-			//prepend workspace folder to see if the file can be found there
-			Executor executor = hudson.model.Executor.currentExecutor();
-			if (executor == null) {
-				System.err.println("cannot get currectExecutor from Jenkins.");
-				return;
-			} 
-			hudson.FilePath workspace = executor.getCurrentWorkspace();					
-			String workspacedir = workspace.getRemote();
-			File fileInWorkSpace = new File (workspacedir + File.separator+suitename);
-			if (fileInWorkSpace.isFile()) {
-				script.append(" \""+fileInWorkSpace.getAbsolutePath()+"\"");				
-			} else { //probably a folder or special placeholder
-				File [] files = null;
-				if (file.isDirectory()) {
-					files = getAllSuitesInDirectory(file);
-				} else {
-					if (fileInWorkSpace.isDirectory()) {
-						files = getAllSuitesInDirectory(fileInWorkSpace);
-					} else if (suitename.contains("*")) {
-						int index = suitename.indexOf("*");
-						String subfolder = "";
-						if (index > 0) {
-							subfolder = suitename.substring(0, index);
-						}
-						//look for all files in folder
-						files = getAllSuitesInDirectory(new File(workspacedir+File.separator+subfolder));
+		String workspacedir = getWorkspaceDir();  // probably the same as build.getWorkspace();
+        FilePath ws = build.getWorkspace();
+        if (ws == null) {
+			listener.getLogger().println("[qftest plugin] ERROR: unable to determine workspace");
+        		return;
+        }
+		VirtualChannel channel = ws.getChannel();
+		if (channel == null) {
+			listener.getLogger().println("[qftest plugin] ERROR: unable to get the build channel");
+			return;
+		}
+		FilePath file = new hudson.FilePath(channel, suitename);
+		
+		try {
+			if (file.exists() && !file.isDirectory()) {
+				script.append(" \""+suitename+"\"");
+			} else {
+				//prepend workspace folder to see if the file can be found there
+				FilePath fileInWorkSpace = new FilePath(channel, workspacedir + separator + suitename);
+				
+				if (fileInWorkSpace.exists() && !fileInWorkSpace.isDirectory()) {
+					script.append(" \""+fileInWorkSpace.absolutize().toString()+"\"");				
+				} else { //probably a folder or special placeholder
+					FilePath [] files = null;
+					if (file.isDirectory()) {
+						files = getAllSuitesInDirectory(file);
 					} else {
-						System.err.println("this point should never be reached");
-						return;
+						if (fileInWorkSpace.isDirectory()) {
+							files = getAllSuitesInDirectory(fileInWorkSpace);
+						} else if (suitename.contains("*")) {
+							int index = suitename.indexOf("*");
+							String subfolder = "";
+							if (index > 0) {
+								subfolder = suitename.substring(0, index);
+							}
+							//look for all files in folder
+							files = getAllSuitesInDirectory(new FilePath(channel, workspacedir+separator+subfolder));
+						} else {
+							listener.getLogger().println("[qftest plugin] ERROR: this point should never be reached (paranoia)");
+							System.err.println("this point should never be reached");
+							script.append("\n\n");	
+							return;
+						}
+					}
+					if (files != null) {
+						for (FilePath qftfile : files) {
+						    script.append(" \""+qftfile.toString()+"\"");
+						}	
 					}
 				}
-				for (File qftfile : files) {
-				    script.append(" \""+qftfile+"\"");
-				}	
 			}
-		}
+		} catch (IOException | InterruptedException e) {
+			listener.getLogger().println("[qftest plugin] ERROR: Encountered an issue while accessing the files: "+ e);
+			e.printStackTrace();
+		}	
+
 		script.append("\n");	
 	}	
 	
 	
-	File[] getAllSuitesInDirectory(File dir) 
+	FilePath[] getAllSuitesInDirectory(FilePath dir) 
 	{
-		File[] files = dir.listFiles(new FileFilter() {
-            @Override
-            public boolean accept(File pathname) {
-                return pathname.getName().toLowerCase().endsWith(".qft") ;
-            }
-        });
+		FilePath[] files = null;
+		try {
+			files = dir.list("*.qft");
+		} catch (IOException | InterruptedException e) {
+			listener.getLogger().println("[qftest plugin] ERROR: Can't determine all test-suites in directory. \n" + e);
+		}
 		return files;
 	}
 	
