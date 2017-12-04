@@ -270,7 +270,6 @@ public class ScriptCreator {
 	 * Calls QF-Test and runs all the suites with their CLAs
 	 */
 	private void runner() {
-		int i = 0;
 		String slash = "\\";
 		for (Suites s : suitefield) {
 			String suiteName = s.getSuitename();
@@ -304,9 +303,10 @@ public class ScriptCreator {
 			addDaemonParamsIfNeeded();
 			
 			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
+			
 			boolean customRunLogSet = false;
 			boolean customRunIdSet = false;
-
+			boolean suitesFileProvided = false;			
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
 				boolean ignoreParam = false;
 			    String param = iterator.next();
@@ -319,7 +319,9 @@ public class ScriptCreator {
 						ignoreParam = true;
 						//ignore
 					}
-				} 
+				} else if (param.contains("-suitesfile")) {
+					suitesFileProvided = true;
+				}
 				if ( !ignoreParam) {
 					script.append(envVars.expand(param));
 				}
@@ -331,10 +333,12 @@ public class ScriptCreator {
 				script.append(" -runid \"%JOB_NAME%-%BUILD_NUMBER%-+y+M+d+h+m+s\"");
 			}
 			
-			if (daemonSelected) {
-				script.append(" \""+getWorkspaceDir()+ separator + s.getSuitename()+"\" ");
-			} else {
-				appendSuites(s.getSuitename());
+			if (!suitesFileProvided) {
+				if (daemonSelected) {
+					script.append(" \""+getWorkspaceDir()+ separator + s.getSuitename()+"\" ");
+				} else {
+					appendSuites(s.getSuitename());
+				}
 			}
 			script.append("\n@echo off\n");
 		}
@@ -498,7 +502,6 @@ public class ScriptCreator {
 	 * @see runner()
 	 */
 	private void runnerShell() {
-		int i = 0;
 		for (Suites s : suitefield) {
 			if (customPathSelected || !qfPathUnix.isEmpty()) {
 				script.append("./");
@@ -510,7 +513,7 @@ public class ScriptCreator {
 			
 			boolean customRunLogSet = false;
 			boolean customRunIdSet = false;
-
+			boolean suitesFileProvided = false;
 			for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
 				boolean ignoreParam = false;
 			    String param = iterator.next();
@@ -523,7 +526,9 @@ public class ScriptCreator {
 						//simply ignore param
 						ignoreParam = true;
 					}
-				} 
+				} else if (param.contains("-suitesfile")) {
+					suitesFileProvided = true;
+				}
 				if (!ignoreParam) {
 					script.append(envVars.expand(param));
 				}
@@ -535,10 +540,12 @@ public class ScriptCreator {
 				script.append(" -runid \"$JOB_NAME-$BUILD_NUMBER-+y+M+d+h+m+s\"");
 			}
 			
-			if (daemonSelected) {
-				script.append(" \""+ getWorkspaceDir() + separator + s.getSuitename()+"\" ");
-			} else {
-				appendSuites(s.getSuitename());
+			if (!suitesFileProvided) {
+				if (daemonSelected) {
+					script.append(" \""+ getWorkspaceDir() + separator + s.getSuitename()+"\" ");
+				} else {
+					appendSuites(s.getSuitename());
+				}
 			}
 			script.append("\n");	
 		}
