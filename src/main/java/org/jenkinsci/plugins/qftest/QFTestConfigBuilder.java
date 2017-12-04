@@ -110,13 +110,17 @@ public class QFTestConfigBuilder extends Builder {
 		this.suitefield = new ArrayList<Suites>();
 		Suites suite;
 		if (suitefield != null) {
-			suitesEmpty = false;
+			this.suitesEmpty = false;
 			for (JSONObject obj : suitefield) {
 				if (obj.getString("suitename").isEmpty()) {
-					suitesEmpty = true;
+					this.suitesEmpty = true;
 				}
 				suite = new Suites(obj.getString("suitename"),
 						obj.getString("customParam"));
+				String params = obj.getString("customParam");
+				if (params.contains("suitesfile") && (suitesEmpty)) {
+					this.suitesEmpty = false;
+				}
 				this.suitefield.add(suite);
 			}
 		} else {
