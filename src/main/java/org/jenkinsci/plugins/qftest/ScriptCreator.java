@@ -153,7 +153,6 @@ public class ScriptCreator {
 		script = new StringBuilder();
 		script.append("@echo off\n");
 		logdir();
-		suitedir();
 		deleteLogs();
 		qftPath();
 		runner();
@@ -177,47 +176,6 @@ public class ScriptCreator {
 		script.append("set deletedir=\"");
 		script.append(reports);
 		script.append("\\%JOB_NAME%\\\"\n");
-	}
-
-	/**
-	 * Sets a suiteX variable for every suite/folder the user entered In case a
-	 * single test-suite was entered, the path for the suite will be saved. If a
-	 * folder got stated, then look at every file in this folder. If the file is
-	 * a suite, add the path to this suite to the suiteX variable (Users can
-	 * enter "*" to run every suite in the workspace)
-	 */
-	private void suitedir() {
-		int i = 0;
-		for (Suites s : suitefield) {
-			if (s.getSuitename().contains(".qft")) {
-				script.append("set suite");
-				script.append(i);
-				script.append("=\"%CD%\\");
-				script.append(s.getSuitename());
-				script.append("\"\n");
-			} else {
-				script.append("setlocal EnableDelayedExpansion\n");
-				script.append("set \"var=\"\n");
-				script.append("set \"var2=\"\n");
-				script.append("set \"isqft=.qft\"\n");
-				script.append("set \"isbak=.bak\"\n");
-				script.append("FOR /F \"delims=\" %%a in ('dir /b \"%CD%\\");
-				if (!s.getSuitename().equals("*"))
-					script.append(s.getSuitename());
-				script.append("\\\"') do (\n");
-				script.append("set \"var2=%%a\"\n");
-				script.append("IF \"!var2:%isqft%=!\" NEQ \"!var2!\" ");
-				script.append("IF \"!var2:%isbak%=!\" == \"!var2!\" ");
-				script.append("set \"var=!var!\"%CD%\\");
-				if (!s.getSuitename().equals("*"))
-					script.append(s.getSuitename());
-				script.append("\\%%a\" \"\n)\n");
-				script.append("set suite");
-				script.append(i);
-				script.append("=!var!\n");
-			}
-			i++;
-		}
 	}
 
 	/**
@@ -286,7 +244,7 @@ public class ScriptCreator {
 					script.append("echo [qftest plugin] WARNING: Daemon mode does "
 							+ "not support the execution of multiple test-suites at "
 							+ "once, so only one test-suite will be run.\n");
-				} else {
+				} else if (!suiteName.isEmpty()){
 					if (suiteName.contains("/")) {
 						slash = "/";
 					}
@@ -413,7 +371,6 @@ public class ScriptCreator {
 	private void createShell() {
 		script = new StringBuilder();
 		logdirShell();
-		suitedirShell();
 		deleteLogsShell();
 		qftPathShell();
 		runnerShell();
@@ -438,25 +395,6 @@ public class ScriptCreator {
 		script.append(reports);
 		script.append("/$JOB_NAME/\"\n");
 		script.append("CURDIR=\""+getWorkspaceDir()+"\"\n");
-	}
-
-	/**
-	 * @see suitedir()
-	 */
-	private void suitedirShell() {
-		int i = 0;
-		for (Suites s : suitefield) {
-			script.append("SUITE");
-			script.append(i++);
-			script.append("=\"");
-			script.append(s.getSuitename());
-			if (!s.getSuitename().equals("*")) {
-				script.append(s.getSuitename().endsWith(".qft") ? "\"\n"
-						: "/*.qft\"\n");
-			} else {
-				script.append("\"\n");
-			}
-		}
 	}
 
 	/**
