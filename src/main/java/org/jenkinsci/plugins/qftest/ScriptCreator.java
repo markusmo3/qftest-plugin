@@ -254,6 +254,11 @@ public class ScriptCreator {
 					script.append(suiteName);
 					script.append(slash);
 					script.append(" ...\n");
+				} else {
+					if (s.getCustomParam().contains("suitesfile")) {
+						script.append("echo [qftest plugin] Running test-suites defined in suitesfile ");
+						script.append(" ...\n");
+					}
 				}
 			}
 			script.append("@echo on\n");
