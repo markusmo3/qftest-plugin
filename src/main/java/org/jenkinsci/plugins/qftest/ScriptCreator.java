@@ -297,7 +297,12 @@ public class ScriptCreator {
 			
 			if (!suitesFileProvided) {
 				if (daemonSelected) {
-					script.append(" \""+getWorkspaceDir()+ separator + s.getSuitename()+"\" ");
+					String suite = s.getSuitename();
+					if ( suite.startsWith("/") || suite.startsWith("\\")) {
+						script.append(" \""+ suite+"\" ");
+					} else {
+						script.append(" \""+getWorkspaceDir()+ "/" + suite+"\" ");
+					}
 				} else {
 					appendSuites(s.getSuitename());
 				}
@@ -484,7 +489,12 @@ public class ScriptCreator {
 			
 			if (!suitesFileProvided) {
 				if (daemonSelected) {
-					script.append(" \""+ getWorkspaceDir() + separator + s.getSuitename()+"\" ");
+					String suite = s.getSuitename();
+					if ( suite.startsWith("/") || suite.startsWith("\\")) {
+						script.append(" \""+ suite+"\" ");
+					} else {
+						script.append(" \""+getWorkspaceDir() + "/" + suite+"\" ");
+					}
 				} else {
 					appendSuites(s.getSuitename());
 				}
