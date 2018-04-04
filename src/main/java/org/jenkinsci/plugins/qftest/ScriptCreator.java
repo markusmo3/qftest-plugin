@@ -231,6 +231,7 @@ public class ScriptCreator {
 		String slash = "\\";
 		for (Suites s : suitefield) {
 			String suiteName = s.getSuitename();
+			suiteName = envVars.expand(suiteName);
 			if (suiteName.contains(".qft")) {
 				script.append("echo [qftest plugin] Running test-suite ");
 				script.append(s.getSuitename());
@@ -488,15 +489,16 @@ public class ScriptCreator {
 			}
 			
 			if (!suitesFileProvided) {
+				String suite = s.getSuitename();
+				suite = envVars.expand(suite);
 				if (daemonSelected) {
-					String suite = s.getSuitename();
 					if ( suite.startsWith("/") || suite.startsWith("\\")) {
 						script.append(" \""+ suite+"\" ");
 					} else {
 						script.append(" \""+getWorkspaceDir() + "/" + suite+"\" ");
 					}
 				} else {
-					appendSuites(s.getSuitename());
+					appendSuites(suite);
 				}
 			}
 			script.append("\n");	
