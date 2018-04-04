@@ -299,13 +299,14 @@ public class ScriptCreator {
 			if (!suitesFileProvided) {
 				if (daemonSelected) {
 					String suite = s.getSuitename();
+					suite = envVars.expand(suite);
 					if ( suite.startsWith("/") || suite.startsWith("\\")) {
 						script.append(" \""+ suite+"\" ");
 					} else {
 						script.append(" \""+getWorkspaceDir()+ "/" + suite+"\" ");
 					}
 				} else {
-					appendSuites(s.getSuitename());
+					appendSuites(suiteName);
 				}
 			}
 			script.append("\n@echo off\n");
@@ -525,6 +526,8 @@ public class ScriptCreator {
         if (ws == null) {
 			listener.getLogger().println("[qftest plugin] ERROR: unable to determine workspace");
         		return;
+        } else {
+        		listener.getLogger().println("[qftest plugin] INFO: using workspace: " + ws);
         }
 		VirtualChannel channel = ws.getChannel();
 		if (channel == null) {
@@ -559,6 +562,7 @@ public class ScriptCreator {
 							files = getAllSuitesInDirectory(new FilePath(channel, workspacedir+separator+subfolder));
 						} else {
 							listener.getLogger().println("[qftest plugin] ERROR: this point should never be reached (paranoia)");
+							listener.getLogger().println("[qftest plugin] ERROR: filepath: " + fileInWorkSpace);
 							System.err.println("this point should never be reached");
 							script.append("\n\n");	
 							return;
@@ -566,7 +570,7 @@ public class ScriptCreator {
 					}
 					if (files != null) {
 						for (FilePath qftfile : files) {
-						    script.append(" \""+qftfile.toString()+"\"");
+						    script.append(" \""+qftfile+"\"");
 						}	
 					}
 				}
