@@ -551,6 +551,7 @@ public class ScriptCreator {
 						files = getAllSuitesInDirectory(file);
 					} else {
 						if (fileInWorkSpace.isDirectory()) {
+							listener.getLogger().println("[qftest plugin] DEBUG: suite param is a folder, trying to determine files ...");
 							files = getAllSuitesInDirectory(fileInWorkSpace);
 						} else if (suitename.contains("*")) {
 							int index = suitename.indexOf("*");
@@ -572,6 +573,8 @@ public class ScriptCreator {
 						for (FilePath qftfile : files) {
 						    script.append(" \""+qftfile+"\"");
 						}	
+					} else {
+						listener.getLogger().println("[qftest plugin] ERROR: no files found in folder.");
 					}
 				}
 			}
@@ -586,9 +589,16 @@ public class ScriptCreator {
 	
 	FilePath[] getAllSuitesInDirectory(FilePath dir) 
 	{
+		listener.getLogger().println("[qftest plugin] DEBUG: getAllSuitesInDirectory - " + dir);
 		FilePath[] files = null;
 		try {
 			files = dir.list("*.qft");
+			listener.getLogger().println("[qftest plugin] DEBUG: getAllSuitesInDirectory - found " + files.length + " files.");
+			if (files.length > 0) {
+				for (FilePath file : files) {
+					listener.getLogger().println("[qftest plugin] DEBUG: getAllSuitesInDirectory - found file:" + file);
+				}
+			}			
 		} catch (IOException | InterruptedException e) {
 			listener.getLogger().println("[qftest plugin] ERROR: Can't determine all test-suites in directory. \n" + e);
 		}
