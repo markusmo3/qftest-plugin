@@ -157,6 +157,7 @@ public class ScriptCreator {
 		qftPath();
 		runner();
 		genreport();
+		genDoc();
 		setMark();
 		popd();
 		scriptFile = new BatchFile(script.toString());
@@ -282,6 +283,9 @@ public class ScriptCreator {
 						ignoreParam = true;
 						//ignore
 					}
+				} else if (param.contains("-gendoc")) {
+					ignoreParam = true;
+					//ignore
 				} else if (param.contains("-suitesfile")) {
 					suitesFileProvided = true;
 				}
@@ -341,6 +345,9 @@ public class ScriptCreator {
 				} else if (param.contains("-runid")) {
 	                  //ignore runid param in report generation
 						ignoreParam = true;
+				} else if (param.contains("-gendoc")) {
+	                  //ignore gendoc param in report generation
+						ignoreParam = true;
 				}
 				
 				if (!ignoreParam) {
@@ -358,6 +365,24 @@ public class ScriptCreator {
 		script.append(" \"%logdir%\\logs\"\n\n");
 		script.append("@echo off\n");
 		script.append("if %errorlevel% LSS 0 ( set qfError=%errorlevel% )\n");
+	}
+	
+	private void genDoc() {
+
+		for (Suites s : suitefield) {
+			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
+			if (matchList.contains("-gendoc")) {
+				script.append("echo [qftest plugin] Generating documentation...\n");
+				script.append("@echo on\n");
+				script.append("qftestc -batch");
+				
+				for (Iterator<String> iterator = matchList.iterator(); iterator.hasNext();) {
+					String param = iterator.next();
+					script.append(" "+envVars.expand(param));
+				}	
+				script.append("@echo off\n");
+			}
+		}
 	}
 
 	/**
@@ -386,6 +411,7 @@ public class ScriptCreator {
 		qftPathShell();
 		runnerShell();
 		genreportShell();
+		genDoc();
 		setMarkShell();
 		System.out.println(script.toString());
 		scriptFile = new Shell(script.toString());
@@ -475,6 +501,9 @@ public class ScriptCreator {
 						//simply ignore param
 						ignoreParam = true;
 					}
+				} else if (param.contains("-gendoc")) {
+					ignoreParam = true;
+					//ignore
 				} else if (param.contains("-suitesfile")) {
 					suitesFileProvided = true;
 				}
@@ -661,7 +690,10 @@ public class ScriptCreator {
 				} else if (param.contains("-runid")) {
 	                  //ignore runid param in report generation
 						ignoreParam = true;
-				}
+				} else if (param.contains("-gendoc")) {
+	                  //ignore gendoc param in report generation
+						ignoreParam = true;
+				} 
 				if (!ignoreParam) {
 					script.append(" "+envVars.expand(param));
 				}
