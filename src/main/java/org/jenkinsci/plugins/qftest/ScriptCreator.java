@@ -286,7 +286,11 @@ public class ScriptCreator {
 				} else if (param.contains("-gendoc")) {
 					ignoreParam = true;
 					//ignore
-				} else if (param.contains("-suitesfile")) {
+				} else if (param.contains("-testdoc")) {
+					ignoreParam = true;
+				} else if (param.contains("-pkgdoc")) {
+					ignoreParam = true;
+				}else if (param.contains("-suitesfile")) {
 					suitesFileProvided = true;
 				}
 				if ( !ignoreParam) {
@@ -348,6 +352,10 @@ public class ScriptCreator {
 				} else if (param.contains("-gendoc")) {
 	                  //ignore gendoc param in report generation
 						ignoreParam = true;
+				} else if (param.contains("-testdoc")) {
+						ignoreParam = true;
+				} else if (param.contains("-pkgdoc")) {
+					ignoreParam = true;
 				}
 				
 				if (!ignoreParam) {
@@ -380,7 +388,10 @@ public class ScriptCreator {
 					String param = iterator.next();
 					script.append(" "+envVars.expand(param));
 				}	
-				script.append("@echo off\n");
+				
+				String suiteName = s.getSuitename();
+				appendSuites(suiteName);
+				script.append("\n@echo off\n");
 			}
 		}
 	}
@@ -504,6 +515,10 @@ public class ScriptCreator {
 				} else if (param.contains("-gendoc")) {
 					ignoreParam = true;
 					//ignore
+				} else if (param.contains("-testdoc")) {
+					ignoreParam = true;
+				} else if (param.contains("-pkgdoc")) {
+					ignoreParam = true;
 				} else if (param.contains("-suitesfile")) {
 					suitesFileProvided = true;
 				}
@@ -693,7 +708,12 @@ public class ScriptCreator {
 				} else if (param.contains("-gendoc")) {
 	                  //ignore gendoc param in report generation
 						ignoreParam = true;
-				} 
+				} else if (param.contains("-testdoc")) {
+					ignoreParam = true;
+				} else if (param.contains("-pkgdoc")) {
+					ignoreParam = true;
+				}
+				
 				if (!ignoreParam) {
 					script.append(" "+envVars.expand(param));
 				}
