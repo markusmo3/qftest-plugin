@@ -378,8 +378,9 @@ public class ScriptCreator {
 	private void genDoc() {
 
 		for (Suites s : suitefield) {
-			List<String> matchList = getCustomParamsAsList(s.getCustomParam());
-			if (matchList.contains("-gendoc")) {
+			String params = s.getCustomParam();
+			List<String> matchList = getCustomParamsAsList(params);
+			if (params.contains("-gendoc")) {
 				script.append("echo [qftest plugin] Generating documentation...\n");
 				script.append("@echo on\n");
 				script.append("qftestc -batch");
