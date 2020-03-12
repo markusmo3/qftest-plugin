@@ -1,7 +1,5 @@
 [![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/qftest.svg)](https://plugins.jenkins.io/qftest)
 [![GitHub release](https://img.shields.io/github/release/jenkinsci/qftest-plugin.svg?label=changelog)](https://github.com/jenkinsci/qftest-plugin/releases/latest)
-[![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/qftest.svg?color=blue)](https://plugins.jenkins.io/qftest)[![Jenkins Plugin](https://img.shields.io/jenkins/plugin/v/qftest.svg)](https://plugins.jenkins.io/qftest)
-[![GitHub release](https://img.shields.io/github/release/jenkinsci/qftest-plugin.svg?label=changelog)](https://github.com/jenkinsci/qftest-plugin/releases/latest)
 [![Jenkins Plugin Installs](https://img.shields.io/jenkins/plugin/i/qftest.svg?color=blue)](https://plugins.jenkins.io/qftest)
 
 # The QF-Test Jenkins plugin
