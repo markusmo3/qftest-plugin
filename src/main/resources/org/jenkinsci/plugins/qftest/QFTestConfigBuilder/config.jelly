@@ -1,52 +1,53 @@
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
-  <f:block title="">
-      <table width="100%">
-        <col width="50%"/>
-        <col width="50%"/>
-        <tr>
-            <td>Name of test-suite(s) or parent folder</td>
-            <td>Additional Command Line Arguments</td>          
-        </tr>
-      </table>
-      <f:repeatable field="suitefield" minimum="1">
-           <table width="100%">
-            <col width="50%"/>
-            <col width="50%"/>
-            <tr>
-                <td><f:textbox field="suitename"/></td>
-                <td><f:textbox field="customParam" /></td>
-            </tr>
-            <tr>
-                <td><f:repeatableDeleteButton/></td>
-            </tr>
-           </table>
-      </f:repeatable>
-  </f:block>
-  
-  <f:advanced>
-    <f:block>
-      <f:optionalBlock title="Use specific QF-Test version" field="customPath" checked="${instance.specificQFTestVersion}">
-        <f:entry title="Path to version specific QF-Test folder">
-            <f:textbox value="${instance.customPath}" field="path"/>
+
+    <f:optionalBlock inline="true" checked="${(instance != null) ? (instance.getCustomPath()!=null) : false}" title="Configure QF-Test binary"
+    help="/descriptor/org.jenkinsci.plugins.qftest.QFTestConfigBuilder/help/customPathOption" >
+        <f:entry title="Custom QF-Test binary for test calls" field="customPath" >
+            <f:textbox value="${instance.customPath}" tooltip="Provide an empty string, if the default search path shall be used again"
+            />
         </f:entry>
-      </f:optionalBlock>
-      
-      <f:optionalBlock title="Change temporary directory for reports" field="customReports" checked="${instance.customReportTempDirectory}">
-        <f:entry title="Directory for temporary reports">
-            <f:textbox value="${instance.customReports}" field="directory"/>
+    </f:optionalBlock>
+
+
+    <f:entry title="Output directory for reports" field="reportDirectory">
+        <f:textbox value="${instance.customReports}" default="${descriptor.defaultReportDir}"/>
+    </f:entry>
+
+
+    <f:entry title="Test Suite configuration"
+        help="/descriptor/org.jenkinsci.plugins.qftest.QFTestConfigBuilder/help/suiteConfig" >
+        <f:repeatable minimum="1" field="suitefield">
+            <st:include page="config.jelly" class="${descriptor.clazz}"/>
+        </f:repeatable>
+    </f:entry>
+
+    <f:advanced title="Advanced Test result control" >
+        <f:description >
+           <b>Mapping between Jenkins build result and QF-Test run outcome</b>
+        </f:description>
+        <f:entry field="onTestWarning" title="Jenkins result on QFT warning">
+            <f:select>
+            <option> Fetching values...</option>
+            </f:select>
         </f:entry>
-      </f:optionalBlock>
-      
-      <f:optionalBlock title="Run test-suites on daemon" field="daemon" checked="${instance.runOnDaemonSelected}">
-        <f:entry title="Daemonhost">
-            <f:textbox value="${instance.daemonhost}" field="daemonhost"/>
+
+        <f:entry field="onTestError" title="Jenkins result on QFT error">
+            <f:select>
+            <option> Fetching values...</option>
+            </f:select>
         </f:entry>
-        <f:entry title="Daemonport">
-            <f:textbox value="${instance.daemonport}" field="daemonport"/>
+
+        <f:entry field="onTestException" title="Jenkins result on QFT exception">
+            <f:select>
+            <option> Fetching values...</option>
+            </f:select>
         </f:entry>
-      </f:optionalBlock>
-    </f:block>
-  </f:advanced>
-  
+        <f:entry field="onTestFailure" title="Jenkins result on failure">
+            <f:select>
+                <option> Fetching values...</option>
+            </f:select>
+        </f:entry>
+    </f:advanced>
+
 </j:jelly>
