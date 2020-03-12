@@ -22,7 +22,7 @@
   <version>2.0.1-SNAPSHOT</version>
   <packaging>hpi</packaging>
   <name>QF-Test Plugin</name>
-  <url>https://wiki.jenkins-ci.org/display/JENKINS/QF-Test+Plugin</url>
+  <url>https://github.com/jenkinsci/qftest-plugin</url>
 
   <licenses>
     <license>
