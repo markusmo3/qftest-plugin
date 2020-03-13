@@ -145,10 +145,12 @@ pipeline {
 
     stage('QF-Test') {
       steps {
-        QFTest ([
-           //customPath: '@PATH-TO-QF-TEST-INSTALLATION' /*if required*/
-           [customParam: '-verbose', suitename: 'exampleTestSuite.qft']
-          ])
+        QFTest (
+           customPath: '@QF-TEST-BINARY@', /*if path setting is required*/
+           suitefield: [
+             [customParam: '', suitename: '.']
+           ]
+        )
       }
     }
 
@@ -187,10 +189,12 @@ pipeline {
       }
       steps {
         unstash 'suites-stash'
-        QFTest ([
-           //customPath: '@PATH-TO-QF-TEST-INSTALLATION' /*if required*/
-          [customParam: '', suitename: '.']
-        ])
+        QFTest (
+           customPath: '@QF-TEST-BINARY@', /*if path setting is required*/
+           suitefield: [
+             [customParam: '', suitename: '.']
+           ]
+        )
       }
       post {
         always {
