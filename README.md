@@ -131,7 +131,7 @@ QF-Test itself will be run verbosely.
 pipeline {
   agent {
     node {
-      customWorkspace '@WORKSPACE@'  
+      customWorkspace '@WORKSPACE@'
       label 'master'
     }
   }
@@ -229,3 +229,5 @@ This version brings an overall renewal of the QF-Test jenkins plugin. Its primar
 	* Setting the Jenkins build result
 * **Breaking change**: The default location of the QF-Test log directory changed. (This will also break legacy configurations with the now obsolete post build steps relaying on explicit log path)
 * **Breaking change**: Direct support for QF-Test runs in *daemon mode* has been dropped. It can still be configured via the `customParam` option. In an Jenkins build environment we recommend the usage of *Jenkins agents* instead.
+* **Breaking change**: Environment variables containing other characters than A-Z, numbers and _ (underscore) are not expanded anymore, because the plugin now uses the variable expansion directly from jenkins.
+* **Breaking change**: If you want to use a specific QF-Test version you need to define the location of the qftest.exe binary instead of the version specific path.
