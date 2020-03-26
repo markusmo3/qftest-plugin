@@ -9,6 +9,6 @@ public class RunLogs extends Suites {
 
     @Override
     protected String directorySearchString() {
-        return "**/*.qrz";
+        return "*.q??";
     }
 }

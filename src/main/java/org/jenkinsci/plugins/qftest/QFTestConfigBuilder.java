@@ -62,7 +62,7 @@ import htmlpublisher.HtmlPublisher;
  *
  * This class saves all the configurations made by the user and executes a
  * script created by the ScriptCreator Class when a build is performed
- * 
+ *
  * @author QFS, Sebastian Kleber
  * @author QFS, Philipp Mahlberg
  */
@@ -168,6 +168,7 @@ public class QFTestConfigBuilder extends Builder implements SimpleBuildStep
 	@Override
 	public void perform(@Nonnull Run<?, ?> run, @Nonnull FilePath workspace, @Nonnull Launcher launcher, @Nonnull TaskListener listener) throws InterruptedException, IOException {
 
+		EnvVars env = run.getEnvironment(listener);
 
 		FilePath logdir = workspace.child(getReportDirectory());
 
@@ -213,7 +214,7 @@ public class QFTestConfigBuilder extends Builder implements SimpleBuildStep
 					 .cmds(args)
 					 .stdout(listener)
 					 .pwd(workspace)
-					 .envs(run.getEnvironment(listener))
+					 .envs(env)
 					 .start();
 		 };
 
@@ -223,8 +224,12 @@ public class QFTestConfigBuilder extends Builder implements SimpleBuildStep
 
 		 //RUN SUITES
 		 suitefield.stream()
-             	.peek(sf -> listener.getLogger().println(sf.toString()))
-				.flatMap(sf -> {
+				 .peek(sf -> listener.getLogger().println(sf.toString()))
+				 .map(sf -> new Suites(
+				 		env.expand(sf.getSuitename()), env.expand(sf.getCustomParam())
+				 ))
+				 .peek(sf -> listener.getLogger().println(sf.toString()))
+				 .flatMap(sf -> {
 					try {
 						return sf.expand(workspace);
 					} catch (java.lang.Exception ex) {
@@ -234,38 +239,38 @@ public class QFTestConfigBuilder extends Builder implements SimpleBuildStep
 						));
 						return Stream.<Suites>empty();
 					}
-				}).forEach(sf -> {
-					try {
-						QFTestCommandLineBuilder args = newQFTCommandLine.apply(QFTestCommandLineBuilder.RunMode.RUN);
+				 })
+				 .forEach(sf -> {
+					 try {
+						 QFTestCommandLineBuilder args = newQFTCommandLine.apply(QFTestCommandLineBuilder.RunMode.RUN);
 
-						args.presetArg(QFTestCommandLineBuilder.PresetType.ENFORCE, "-run")
-								.presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-report")
-								.presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-report.html")
-								.presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-report.html")
-								.presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-report.junit")
-								.presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-report.xml")
-								.presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-gendoc")
-								.presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-testdoc")
-								.presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-pkgdoc")
-								.presetArg(QFTestCommandLineBuilder.PresetType.ENFORCE, "-nomessagewindow")
-								.presetArg(QFTestCommandLineBuilder.PresetType.ENFORCE, "-runlogdir", qrzdir.getRemote());
-						args.addSuiteConfig(workspace, sf);
+						 args.presetArg(QFTestCommandLineBuilder.PresetType.ENFORCE, "-run")
+								 .presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-report")
+								 .presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-report.html")
+								 .presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-report.html")
+								 .presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-report.junit")
+								 .presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-report.xml")
+								 .presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-gendoc")
+								 .presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-testdoc")
+								 .presetArg(QFTestCommandLineBuilder.PresetType.DROP, "-pkgdoc")
+								 .presetArg(QFTestCommandLineBuilder.PresetType.ENFORCE, "-nomessagewindow")
+								 .presetArg(QFTestCommandLineBuilder.PresetType.ENFORCE, "-runlogdir", qrzdir.getRemote());
+						 args.addSuiteConfig(workspace, sf);
 
-						int ret = startQFTestProc.apply(args).join();
+						 int ret = startQFTestProc.apply(args).join();
 
-						addToReducedReturnValue((char) ret);
-						listener.getLogger().println("  Finished with return value: " + ret);
+						 addToReducedReturnValue((char) ret);
+						 listener.getLogger().println("  Finished with return value: " + ret);
 
 
-					} catch (java.lang.Exception ex) {
-						listener.error(ex.getMessage());
-						resultSetter.accept(this.getOnTestFailure());
-						Functions.printStackTrace(ex, listener.fatalError(ex.getMessage()));
-					}
-				});
+					 } catch (java.lang.Exception ex) {
+						 listener.error(ex.getMessage());
+						 resultSetter.accept(this.getOnTestFailure());
+						 Functions.printStackTrace(ex, listener.fatalError(ex.getMessage()));
+					 }
+				 });
 
 		//DETEERMINE BUILD STATUS
-
 
         if (reducedQFTReturnValue != null ) {
 			switch (reducedQFTReturnValue.charValue()) {
@@ -298,7 +303,7 @@ public class QFTestConfigBuilder extends Builder implements SimpleBuildStep
 		java.util.function.Function<FilePath, String> fp_names = (fp -> fp.getName());
 		run.pickArtifactManager().archive(
 				qrzdir, launcher, new BuildListenerAdapter(listener),
-				Arrays.stream(qrzdir.list("*.qrz"))
+				Arrays.stream(qrzdir.list("*.q*"))
 						.collect(Collectors.toMap(fp_names, fp_names))
 		);
 
@@ -357,7 +362,7 @@ public class QFTestConfigBuilder extends Builder implements SimpleBuildStep
 	// Descriptor is needed to access global variables
 	/*
 	 * (non-Javadoc)
-	 * 
+	 *
 	 * @see hudson.tasks.Builder#getDescriptor()
 	 */
 	@Override
@@ -441,7 +446,7 @@ public class QFTestConfigBuilder extends Builder implements SimpleBuildStep
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see hudson.tasks.BuildStepDescriptor#isApplicable(java.lang.Class)
 		 */
 		@Override
@@ -454,7 +459,7 @@ public class QFTestConfigBuilder extends Builder implements SimpleBuildStep
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see hudson.model.Descriptor#getDisplayName()
 		 */
 		@Override
@@ -464,7 +469,7 @@ public class QFTestConfigBuilder extends Builder implements SimpleBuildStep
 
 		/*
 		 * (non-Javadoc)
-		 * 
+		 *
 		 * @see
 		 * hudson.model.Descriptor#configure(org.kohsuke.stapler.StaplerRequest,
 		 * net.sf.json.JSONObject)
@@ -482,7 +487,7 @@ public class QFTestConfigBuilder extends Builder implements SimpleBuildStep
 		/**
 		 * Returns the defined QF-Test installation path (Windows) in the global
 		 * setting.
-		 * 
+		 *
 		 * @return path to QF-Test installation (Windows)
 		 */
 		public String getQfPath() {
@@ -496,7 +501,7 @@ public class QFTestConfigBuilder extends Builder implements SimpleBuildStep
 		/**
 		 * Returns the defined QF-Test installation path (Unix) in the global
 		 * setting.
-		 * 
+		 *
 		 * @return path to QF-Test installation (Unix)
 		 */
 		public String getQfPathUnix() {
